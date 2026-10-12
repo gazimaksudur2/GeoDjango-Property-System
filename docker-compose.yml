@@ -1,0 +1,23 @@
+services:
+
+  database:
+    build:
+      context: .
+    container_name: geodjango_postgis
+
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: property_db
+      POSTGRES_USER: property_user
+      POSTGRES_PASSWORD: property_password
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+
+volumes:
+  postgres_data:

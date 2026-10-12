@@ -1,0 +1,110 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+# ======================
+# Python
+# ======================
+
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# uv cache
+.uv/
+
+
+# ======================
+# Django
+# ======================
+
+# Local settings
+*.local.py
+
+# Database
+db.sqlite3
+db.sqlite3-journal
+
+# Migrations cache
+*/migrations/__pycache__/
+
+# Collected static files
+staticfiles/
+
+# User uploaded media
+media/
+
+
+# ======================
+# Environment variables
+# ======================
+
+.env
+.env.*
+!.env.example
+
+
+# ======================
+# Django secrets
+# ======================
+
+secret_key.txt
+
+
+# ======================
+# Docker
+# ======================
+
+*.log
+
+# Docker volumes (if created locally)
+postgres_data/
+
+
+# ======================
+# IDE / Editor
+# ======================
+
+.vscode/
+.idea/
+
+# Vim
+*.swp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+
+# ======================
+# Testing
+# ======================
+
+.coverage
+htmlcov/
+.pytest_cache/
+
+
+# ======================
+# Jupyter
+# ======================
+
+.ipynb_checkpoints/
