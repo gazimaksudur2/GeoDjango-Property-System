@@ -1,0 +1,16 @@
+location_id,name,slug,country,state,city,address,latitude,longitude,is_active
+1,Dhaka City,dhaka-city,Bangladesh,Dhaka,Dhaka,Gulshan Avenue,23.7808,90.419,True
+2,Gulshan,gulshan,Bangladesh,Dhaka,Dhaka,Gulshan Avenue Road,23.7925,90.4078,True
+3,Banani,banani,Bangladesh,Dhaka,Dhaka,Banani Road 11,23.7936,90.4043,True
+4,Dhanmondi,dhanmondi,Bangladesh,Dhaka,Dhaka,Dhanmondi Road 27,23.7465,90.376,True
+5,Uttara,uttara,Bangladesh,Dhaka,Dhaka,Uttara Sector 7,23.8759,90.3795,True
+6,Chittagong City,chittagong-city,Bangladesh,Chittagong,Chittagong,Agrabad Area,22.3569,91.7832,True
+7,Cox Bazar,cox-bazar,Bangladesh,Chittagong,Cox Bazar,Kolatoli Road,21.4272,92.0058,True
+8,Sylhet City,sylhet-city,Bangladesh,Sylhet,Sylhet,Zindabazar,24.8949,91.8687,True
+9,Rajshahi City,rajshahi-city,Bangladesh,Rajshahi,Rajshahi,Shaheb Bazar,24.3745,88.6042,True
+10,Khulna City,khulna-city,Bangladesh,Khulna,Khulna,Sonadanga Area,22.8456,89.5403,True
+11,Barishal City,barishal-city,Bangladesh,Barishal,Barishal,Sadar Road,22.701,90.3535,True
+12,Comilla City,comilla-city,Bangladesh,Chittagong,Cumilla,Kandirpar Area,23.4607,91.1809,True
+13,Gazipur City,gazipur-city,Bangladesh,Dhaka,Gazipur,Joydebpur Area,24.0023,90.4264,True
+14,Narayanganj City,narayanganj-city,Bangladesh,Dhaka,Narayanganj,Chashara Area,23.6238,90.5,True
+15,Mymensingh City,mymensingh-city,Bangladesh,Mymensingh,Mymensingh,Town Hall Area,24.7471,90.4203,True

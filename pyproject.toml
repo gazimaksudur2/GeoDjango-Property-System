@@ -11,6 +11,9 @@ dependencies = [
     "psycopg2-binary>=2.9.13",
     "pgvector>=0.3.6",
     "pillow>=12.3.0",
+    "djangorestframework>=3.17.2",
+    "pandas>=3.0.6",
+    "django-filter>=25.1",
 ]
 
 [tool.uv]
