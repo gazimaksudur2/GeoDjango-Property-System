@@ -14,7 +14,15 @@ dependencies = [
     "djangorestframework>=3.17.2",
     "pandas>=3.0.6",
     "django-filter>=25.1",
+    "sentence-transformers>=6.1.0",
+    "torch",
 ]
 
 [tool.uv]
 package = false
+
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true

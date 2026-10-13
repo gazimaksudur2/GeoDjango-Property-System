@@ -11,7 +11,7 @@ class Location(models.Model):
     address = models.CharField(max_length=255, blank=True)
     point = models.PointField(geography=True, blank=True, null=True, srid=4326)
     boundary = models.MultiPolygonField(srid=4326, null=True, blank=True)
-    embedding = VectorField(dimensions=1536, null=True, blank=True)
+    embedding = VectorField(dimensions=384, null=True, blank=True)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -59,7 +59,7 @@ class Property(models.Model):
         blank=True
     )
     footprint = models.PolygonField(srid=4326, null=True, blank=True)
-    embedding = VectorField(dimensions=1536, null=True, blank=True)
+    embedding = VectorField(dimensions=384, null=True, blank=True)
     is_featured = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)

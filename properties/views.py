@@ -5,6 +5,8 @@ from rest_framework.response import Response
 from django.contrib.gis.geos import Point
 from django.contrib.gis.measure import D
 from django.contrib.gis.db.models.functions import Distance
+from pgvector.django import CosineDistance
+from properties.utils.embeddings import generate_embedding
 
 from .models import (
     Location,
@@ -182,7 +184,52 @@ class PropertyViewSet(viewsets.ModelViewSet):
             serializer.data
         )
 
+    @action(
+    detail=False,
+    methods=["get"]
+)
+    def semantic_search(self, request):
 
+        query = request.GET.get("q")
+
+        if not query:
+            return Response(
+                {
+                    "error": "q parameter is required"
+                },
+                status=400
+            )
+
+        query_embedding = generate_embedding(
+            query
+        )
+
+        properties = (
+            Property.objects
+            .filter(
+                embedding__isnull=False
+            )
+            .annotate(
+                similarity=CosineDistance(
+                    "embedding",
+                    query_embedding
+                )
+            )
+            .order_by(
+                "similarity"
+            )[:10]
+        )
+
+        serializer = PropertySerializer(
+            properties,
+            many=True
+        )
+
+        return Response(
+            serializer.data
+        )
+
+        
 class PropertyImageViewSet(viewsets.ModelViewSet):
     queryset = PropertyImage.objects.all()
     serializer_class = PropertyImageSerializer
