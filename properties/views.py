@@ -189,7 +189,6 @@ class PropertyViewSet(viewsets.ModelViewSet):
     methods=["get"]
 )
     def semantic_search(self, request):
-
         query = request.GET.get("q")
 
         if not query:
@@ -229,7 +228,80 @@ class PropertyViewSet(viewsets.ModelViewSet):
             serializer.data
         )
 
-        
+    @action(
+        detail=False,
+        methods=["get"]
+    )
+    def hybrid_search(self, request):
+        query = request.GET.get("q")
+        longitude = request.GET.get("lng")
+        latitude = request.GET.get("lat")
+
+        radius = request.GET.get(
+            "radius",
+            5
+        )
+
+        if not query:
+            return Response(
+                {
+                    "error": "q parameter is required"
+                },
+                status=400
+            )
+
+        query_embedding = generate_embedding(
+            query
+        )
+
+        properties = Property.objects.filter(
+            embedding__isnull=False
+        )
+
+        if longitude and latitude:
+
+            user_location = Point(
+                float(longitude),
+                float(latitude),
+                srid=4326
+            )
+
+            properties = properties.filter(
+                point__distance_lte=(
+                    user_location,
+                    D(km=float(radius))
+                )
+            )
+
+        properties = properties.annotate(
+            similarity=CosineDistance(
+                "embedding",
+                query_embedding
+            )
+        )
+
+        if user_location:
+            properties = properties.annotate(
+                distance=Distance(
+                    "point",
+                    user_location
+                )
+            )
+
+        properties = properties.order_by(
+            "similarity"
+        )[:10]
+
+        serializer = PropertySerializer(
+            properties,
+            many=True
+        )
+
+        return Response(
+            serializer.data
+        )
+
+
 class PropertyImageViewSet(viewsets.ModelViewSet):
     queryset = PropertyImage.objects.all()
     serializer_class = PropertyImageSerializer

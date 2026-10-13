@@ -7,6 +7,19 @@ from .models import (
 )
 
 
+class DistanceField(serializers.Field):
+
+    def to_representation(self, value):
+
+        if value is None:
+            return None
+
+        return {
+            "meters": round(value.m, 2),
+            "kilometers": round(value.km, 3)
+        }
+
+
 class LocationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Location
@@ -26,7 +39,9 @@ class PropertySerializer(serializers.ModelSerializer):
         read_only=True
     )
 
-    distance = serializers.FloatField(read_only=True)
+    distance = DistanceField(
+        read_only=True
+    )
 
     class Meta:
         model = Property
@@ -46,7 +61,7 @@ class PropertySerializer(serializers.ModelSerializer):
             "address",
             "point",
             "footprint",
-            "embedding",
+            "similarity",
             "is_featured",
             "is_active",
             "created_at",
