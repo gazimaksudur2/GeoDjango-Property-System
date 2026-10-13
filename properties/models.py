@@ -1,5 +1,5 @@
 from django.contrib.gis.db import models
-from pgvector.django import VectorField
+from pgvector.django import VectorField, HnswIndex
 
 
 class Location(models.Model):
@@ -8,7 +8,7 @@ class Location(models.Model):
     country = models.CharField(max_length=100)
     state = models.CharField(max_length=100, blank=True)
     city = models.CharField(max_length=100)
-    address = models.CharField(blank=True)
+    address = models.CharField(max_length=255, blank=True)
     point = models.PointField(geography=True, blank=True, null=True, srid=4326)
     boundary = models.MultiPolygonField(srid=4326, null=True, blank=True)
     embedding = VectorField(dimensions=1536, null=True, blank=True)
@@ -18,6 +18,17 @@ class Location(models.Model):
 
     def __str__(self):
         return self.name
+
+    class Meta:
+        indexes = [
+            HnswIndex(
+                name="location_embedding_idx",
+                fields=["embedding"],
+                m=16,
+                ef_construction=64,
+                opclasses=["vector_cosine_ops"],
+            )
+        ]
 
 
 class Property(models.Model):
@@ -57,6 +68,17 @@ class Property(models.Model):
     def __str__(self):
         return self.title
 
+    class Meta:
+        indexes = [
+            HnswIndex(
+                name="property_embedding_idx",
+                fields=["embedding"],
+                m=16,
+                ef_construction=64,
+                opclasses=["vector_cosine_ops"],
+            )
+        ]
+
 
 class PropertyImage(models.Model):
     property = models.ForeignKey(
@@ -74,3 +96,17 @@ class PropertyImage(models.Model):
     is_primary = models.BooleanField(default=False)
     sort_order = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.property.title} image"
+
+    class Meta:
+        indexes = [
+                HnswIndex(
+                    name="image_embedding_idx",
+                    fields=["embedding"],
+                    m=16,
+                    ef_construction=64,
+                    opclasses=["vector_cosine_ops"],
+                )
+            ]

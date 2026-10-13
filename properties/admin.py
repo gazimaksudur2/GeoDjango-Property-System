@@ -1,10 +1,5 @@
 from django.contrib import admin
-
-from .models import (
-    Location,
-    Property,
-    PropertyImage,
-)
+from .models import Location, Property, PropertyImage
 
 
 @admin.register(Location)
@@ -55,8 +50,4 @@ class PropertyImageAdmin(admin.ModelAdmin):
         "is_primary",
         "sort_order",
         "created_at",
-    )
-
-    list_filter = (
-        "is_primary",
     )
