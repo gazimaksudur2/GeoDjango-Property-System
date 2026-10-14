@@ -21,9 +21,24 @@ class DistanceField(serializers.Field):
 
 
 class LocationSerializer(serializers.ModelSerializer):
+
+    similarity = serializers.FloatField(
+        read_only=True
+    )
+
     class Meta:
         model = Location
-        fields = "__all__"
+        fields = [
+            "id",
+            "name",
+            "slug",
+            "country",
+            "state",
+            "city",
+            "address",
+            "point",
+            "similarity",
+        ]
 
 
 class PropertyImageSerializer(serializers.ModelSerializer):
@@ -40,6 +55,10 @@ class PropertySerializer(serializers.ModelSerializer):
     )
 
     distance = DistanceField(
+        read_only=True
+    )
+
+    similarity = serializers.FloatField(
         read_only=True
     )
 

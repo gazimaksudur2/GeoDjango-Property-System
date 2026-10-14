@@ -16,6 +16,8 @@ dependencies = [
     "django-filter>=25.1",
     "sentence-transformers>=6.1.0",
     "torch",
+    "transformers>=5.19.0",
+    "torchvision>=0.29.1",
 ]
 
 [tool.uv]

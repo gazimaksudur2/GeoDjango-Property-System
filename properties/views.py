@@ -25,6 +25,94 @@ class LocationViewSet(viewsets.ModelViewSet):
     queryset = Location.objects.all()
     serializer_class = LocationSerializer
 
+    @action(
+        detail=False,
+        methods=["get"]
+    )
+    def semantic_search(self, request):
+        query = request.GET.get("q")
+
+        if not query:
+            return Response(
+                {
+                    "error": "q parameter is required"
+                },
+                status=400
+            )
+
+        query_embedding = generate_embedding(
+            query
+        )
+
+        locations = (
+            Location.objects
+            .filter(
+                embedding__isnull=False
+            )
+            .annotate(
+                similarity=CosineDistance(
+                    "embedding",
+                    query_embedding
+                )
+            )
+            .order_by(
+                "similarity"
+            )[:10]
+        )
+
+        serializer = LocationSerializer(
+            locations,
+            many=True
+        )
+
+        return Response(
+            serializer.data
+        )
+
+    @action(
+        detail=False,
+        methods=["get"]
+    )
+    def autocomplete(self, request):
+        query = request.GET.get("q")
+
+        if not query:
+            return Response(
+                {
+                    "error": "q parameter is required"
+                },
+                status=400
+            )
+
+        query_embedding = generate_embedding(
+            query
+        )
+
+        locations = (
+            Location.objects
+            .filter(
+                embedding__isnull=False
+            )
+            .annotate(
+                similarity=CosineDistance(
+                    "embedding",
+                    query_embedding
+                )
+            )
+            .order_by(
+                "similarity"
+            )[:5]
+        )
+
+        serializer = LocationSerializer(
+            locations,
+            many=True
+        )
+
+        return Response(
+            serializer.data
+        )
+
 
 class PropertyViewSet(viewsets.ModelViewSet):
     queryset = Property.objects.all()
@@ -90,7 +178,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
             properties,
             many=True
         )
-        
+
         return Response(
             serializer.data
         )
@@ -299,6 +387,128 @@ class PropertyViewSet(viewsets.ModelViewSet):
 
         return Response(
             serializer.data
+        )
+
+    @action(
+        detail=False,
+        methods=["get"]
+    )
+    def similar(self, request):
+        image_id = request.GET.get(
+            "image_id"
+        )
+
+        if not image_id:
+            return Response(
+                {
+                    "error": "image_id required"
+                },
+                status=400
+            )
+        image = PropertyImage.objects.get(
+            id=image_id
+        )
+
+        images = (
+            PropertyImage.objects
+            .filter(
+                embedding__isnull=False
+            )
+            .exclude(
+                id=image.id
+            )
+            .annotate(
+                similarity=CosineDistance(
+                    "embedding",
+                    image.embedding
+                )
+            )
+            .order_by(
+                "similarity"
+            )[:10]
+        )
+
+        serializer = PropertyImageSerializer(
+            images,
+            many=True
+        )
+
+        return Response(
+            serializer.data
+        )
+
+    @action(
+        detail=False,
+        methods=["get"]
+    )
+    def location_hybrid_search(self, request):
+        query = request.GET.get("q")
+
+        if not query:
+            return Response(
+                {
+                    "error": "q parameter is required"
+                },
+                status=400
+            )
+
+        query_embedding = generate_embedding(
+            query
+        )
+
+        locations = (
+            Location.objects
+            .filter(
+                embedding__isnull=False
+            )
+            .annotate(
+                similarity=CosineDistance(
+                    "embedding",
+                    query_embedding
+                )
+            )
+            .order_by(
+                "similarity"
+            )[:3]
+        )
+
+        if not locations.exists():
+            return Response(
+                {
+                    "message": "No matching location found"
+                },
+                status=404
+            )
+
+        location = locations.first()
+
+        properties = (
+            Property.objects
+            .filter(
+                location=location,
+                embedding__isnull=False
+            )
+            .annotate(
+                similarity=CosineDistance(
+                    "embedding",
+                    query_embedding
+                )
+            )
+            .order_by(
+                "similarity"
+            )[:10]
+        )
+
+        serializer = PropertySerializer(
+            properties,
+            many=True
+        )
+
+        return Response(
+            {
+                "location": location.name,
+                "properties": serializer.data
+            }
         )
 
 
