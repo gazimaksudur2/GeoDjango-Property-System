@@ -1,16 +1,29 @@
-location_id,name,slug,country,state,city,address,latitude,longitude,is_active
-1,Dhaka City,dhaka-city,Bangladesh,Dhaka,Dhaka,Gulshan Avenue,23.7808,90.419,True
-2,Gulshan,gulshan,Bangladesh,Dhaka,Dhaka,Gulshan Avenue Road,23.7925,90.4078,True
-3,Banani,banani,Bangladesh,Dhaka,Dhaka,Banani Road 11,23.7936,90.4043,True
-4,Dhanmondi,dhanmondi,Bangladesh,Dhaka,Dhaka,Dhanmondi Road 27,23.7465,90.376,True
-5,Uttara,uttara,Bangladesh,Dhaka,Dhaka,Uttara Sector 7,23.8759,90.3795,True
-6,Chittagong City,chittagong-city,Bangladesh,Chittagong,Chittagong,Agrabad Area,22.3569,91.7832,True
-7,Cox Bazar,cox-bazar,Bangladesh,Chittagong,Cox Bazar,Kolatoli Road,21.4272,92.0058,True
-8,Sylhet City,sylhet-city,Bangladesh,Sylhet,Sylhet,Zindabazar,24.8949,91.8687,True
-9,Rajshahi City,rajshahi-city,Bangladesh,Rajshahi,Rajshahi,Shaheb Bazar,24.3745,88.6042,True
-10,Khulna City,khulna-city,Bangladesh,Khulna,Khulna,Sonadanga Area,22.8456,89.5403,True
-11,Barishal City,barishal-city,Bangladesh,Barishal,Barishal,Sadar Road,22.701,90.3535,True
-12,Comilla City,comilla-city,Bangladesh,Chittagong,Cumilla,Kandirpar Area,23.4607,91.1809,True
-13,Gazipur City,gazipur-city,Bangladesh,Dhaka,Gazipur,Joydebpur Area,24.0023,90.4264,True
-14,Narayanganj City,narayanganj-city,Bangladesh,Dhaka,Narayanganj,Chashara Area,23.6238,90.5,True
-15,Mymensingh City,mymensingh-city,Bangladesh,Mymensingh,Mymensingh,Town Hall Area,24.7471,90.4203,True
+location_id,name,slug,country,state,city,address,latitude,longitude,location_type,description,is_major_area,is_active
+1,Gulshan,gulshan,Bangladesh,Dhaka,Dhaka,Gulshan Avenue,23.7925,90.4078,neighborhood,Gulshan is a popular Dhaka neighborhood with residential and commercial properties.,True,True
+2,Banani,banani,Bangladesh,Dhaka,Dhaka,Banani Road 11,23.7936,90.4043,neighborhood,Banani is a popular Dhaka neighborhood with residential and commercial properties.,True,True
+3,Baridhara,baridhara,Bangladesh,Dhaka,Dhaka,Baridhara Diplomatic Zone,23.8068,90.4182,neighborhood,Baridhara is a popular Dhaka neighborhood with residential and commercial properties.,True,True
+4,Bashundhara Residential Area,bashundhara-residential-area,Bangladesh,Dhaka,Dhaka,Bashundhara Avenue,23.8151,90.4255,neighborhood,Bashundhara Residential Area is a popular Dhaka neighborhood with residential and commercial properties.,True,True
+5,Dhanmondi,dhanmondi,Bangladesh,Dhaka,Dhaka,Dhanmondi Road 27,23.7465,90.376,neighborhood,Dhanmondi is a popular Dhaka neighborhood with residential and commercial properties.,True,True
+6,Uttara,uttara,Bangladesh,Dhaka,Dhaka,Uttara Sector 7,23.8759,90.3795,neighborhood,Uttara is a popular Dhaka neighborhood with residential and commercial properties.,True,True
+7,Mirpur,mirpur,Bangladesh,Dhaka,Dhaka,Mirpur 10 Circle,23.8067,90.3687,neighborhood,Mirpur is a popular Dhaka neighborhood with residential and commercial properties.,True,True
+8,Mohammadpur,mohammadpur,Bangladesh,Dhaka,Dhaka,Mohammadpur Town Hall,23.761,90.358,neighborhood,Mohammadpur is a popular Dhaka neighborhood with residential and commercial properties.,True,True
+9,Tejgaon,tejgaon,Bangladesh,Dhaka,Dhaka,Tejgaon Industrial Area,23.7639,90.391,neighborhood,Tejgaon is a popular Dhaka neighborhood with residential and commercial properties.,True,True
+10,Motijheel,motijheel,Bangladesh,Dhaka,Dhaka,Motijheel Commercial Area,23.733,90.4172,neighborhood,Motijheel is a popular Dhaka neighborhood with residential and commercial properties.,True,True
+11,Wari,wari,Bangladesh,Dhaka,Dhaka,Wari Road,23.7178,90.4169,neighborhood,Wari is a popular Dhaka neighborhood with residential and commercial properties.,True,True
+12,Paltan,paltan,Bangladesh,Dhaka,Dhaka,Paltan Area,23.736,90.412,neighborhood,Paltan is a popular Dhaka neighborhood with residential and commercial properties.,True,True
+13,Lalmatia,lalmatia,Bangladesh,Dhaka,Dhaka,Lalmatia Housing,23.7537,90.3687,neighborhood,Lalmatia is a popular Dhaka neighborhood with residential and commercial properties.,True,True
+14,Khilgaon,khilgaon,Bangladesh,Dhaka,Dhaka,Khilgaon Chowdhury Para,23.75,90.425,neighborhood,Khilgaon is a popular Dhaka neighborhood with residential and commercial properties.,True,True
+15,Rampura,rampura,Bangladesh,Dhaka,Dhaka,Rampura Bridge,23.7638,90.4255,neighborhood,Rampura is a popular Dhaka neighborhood with residential and commercial properties.,True,True
+16,Badda,badda,Bangladesh,Dhaka,Dhaka,Badda Main Road,23.7806,90.426,neighborhood,Badda is a popular Dhaka neighborhood with residential and commercial properties.,True,True
+17,Agrabad,agrabad,Bangladesh,Chattogram,Chattogram,Agrabad Commercial Area,22.325,91.812,neighborhood,Agrabad is a popular Chattogram neighborhood with residential and commercial properties.,True,True
+18,Panchlaish,panchlaish,Bangladesh,Chattogram,Chattogram,Panchlaish Residential Area,22.359,91.824,neighborhood,Panchlaish is a popular Chattogram neighborhood with residential and commercial properties.,True,True
+19,Khulshi,khulshi,Bangladesh,Chattogram,Chattogram,Khulshi Hills,22.368,91.806,neighborhood,Khulshi is a popular Chattogram neighborhood with residential and commercial properties.,True,True
+20,Sylhet City Center,sylhet-city-center,Bangladesh,Sylhet,Sylhet,Zindabazar,24.8949,91.8687,neighborhood,Sylhet City Center is a popular Sylhet neighborhood with residential and commercial properties.,True,True
+21,Shahjalal Upashahar,shahjalal-upashahar,Bangladesh,Sylhet,Sylhet,Upashahar Road,24.913,91.865,neighborhood,Shahjalal Upashahar is a popular Sylhet neighborhood with residential and commercial properties.,True,True
+22,Rajshahi Central,rajshahi-central,Bangladesh,Rajshahi,Rajshahi,Shaheb Bazar,24.3745,88.6042,neighborhood,Rajshahi Central is a popular Rajshahi neighborhood with residential and commercial properties.,True,True
+23,Boalia,boalia,Bangladesh,Rajshahi,Rajshahi,Boalia Area,24.368,88.607,neighborhood,Boalia is a popular Rajshahi neighborhood with residential and commercial properties.,True,True
+24,Khulna City Center,khulna-city-center,Bangladesh,Khulna,Khulna,KDA Avenue,22.8456,89.5403,neighborhood,Khulna City Center is a popular Khulna neighborhood with residential and commercial properties.,True,True
+25,Sonadanga,sonadanga,Bangladesh,Khulna,Khulna,Sonadanga Residential Area,22.826,89.543,neighborhood,Sonadanga is a popular Khulna neighborhood with residential and commercial properties.,True,True
+26,Cox's Bazar Beach Area,coxs-bazar-beach-area,Bangladesh,Cox's Bazar,Cox's Bazar,Marine Drive,21.4272,92.0058,neighborhood,Cox's Bazar Beach Area is a popular Cox's Bazar neighborhood with residential and commercial properties.,True,True
+27,Kolatoli,kolatoli,Bangladesh,Cox's Bazar,Cox's Bazar,Kolatoli Beach Road,21.414,92.008,neighborhood,Kolatoli is a popular Cox's Bazar neighborhood with residential and commercial properties.,True,True
+28,Barishal City,barishal-city,Bangladesh,Barishal,Barishal,Sadar Road,22.701,90.3535,neighborhood,Barishal City is a popular Barishal neighborhood with residential and commercial properties.,True,True

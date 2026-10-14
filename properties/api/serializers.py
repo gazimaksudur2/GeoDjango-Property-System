@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import (
+from ..models import (
     Location,
     Property,
     PropertyImage,
@@ -45,7 +45,12 @@ class PropertyImageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = PropertyImage
-        fields = "__all__"
+        fields = [
+            "id",
+            "image",
+            "caption",
+            "alt_text"
+        ]
 
 
 class PropertySerializer(serializers.ModelSerializer):

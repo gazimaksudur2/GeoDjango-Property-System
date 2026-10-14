@@ -2,133 +2,103 @@ import pandas as pd
 
 from django.core.management.base import BaseCommand
 from django.contrib.gis.geos import Point
+from django.db import transaction
 
 from properties.models import (
     Location,
     Property,
-    PropertyImage,
 )
 
 
 class Command(BaseCommand):
 
-    help = "Import property data from CSV files"
+    help = "Import properties from CSV"
 
+    def clean(self, value):
+
+        if pd.isna(value):
+            return ""
+
+        return value
+
+    @transaction.atomic
     def handle(self, *args, **kwargs):
 
-        self.stdout.write("Starting import...")
-        locations = pd.read_csv(
-            "data/locations.csv"
-        )
-
-        for _, row in locations.iterrows():
-
-            Location.objects.update_or_create(
-                id=row["location_id"],
-                defaults={
-                    "name": row["name"],
-                    "slug": row["slug"],
-                    "country": row["country"],
-                    "state": row["state"],
-                    "city": row["city"],
-                    "address": row["address"],
-
-                    "point": Point(
-                        row["longitude"],
-                        row["latitude"],
-                        srid=4326
-                    ),
-
-                    "is_active": row["is_active"],
-                }
-            )
-
         self.stdout.write(
-            "Locations imported successfully"
+            "Starting property import..."
         )
-
         properties = pd.read_csv(
             "data/properties.csv"
         )
-
+        created = 0
+        updated = 0
         for _, row in properties.iterrows():
-
             location = Location.objects.get(
                 id=row["location_id"]
             )
-
-            Property.objects.update_or_create(
+            property_obj, is_created = Property.objects.update_or_create(
                 id=row["property_id"],
                 defaults={
-
                     "location": location,
-
-                    "title": row["title"],
-
-                    "slug": row["slug"],
-
-                    "description": row["description"],
-
-                    "property_type": row["property_type"],
-
-                    "status": row["status"],
-
+                    "title": self.clean(
+                        row["title"]
+                    ),
+                    "slug": self.clean(
+                        row["slug"]
+                    ),
+                    "description": self.clean(
+                        row["description"]
+                    ),
+                    "property_type": self.clean(
+                        row["property_type"]
+                    ),
+                    "status": self.clean(
+                        row["status"]
+                    ),
                     "price": row["price"],
-
                     "bedrooms": row["bedrooms"],
-
                     "bathrooms": row["bathrooms"],
-
                     "area_sqft": row["area_sqft"],
-
-                    "address": row["address"],
-
+                    "address": self.clean(
+                        row["address"]
+                    ),
                     "point": Point(
-                        row["longitude"],
-                        row["latitude"],
+
+                        float(
+                            row["longitude"]
+                        ),
+
+                        float(
+                            row["latitude"]
+                        ),
+
                         srid=4326
+
+                    ),
+                    "is_featured": bool(
+                        row["is_featured"]
+                    ),
+                    "is_active": bool(
+                        row["is_active"]
                     ),
 
-                    "is_featured": row["is_featured"],
-
-                    "is_active": row["is_active"],
                 }
             )
 
-        self.stdout.write(
-            "Properties imported successfully"
-        )
+            if is_created:
+                created += 1
+            else:
+                updated += 1
+                self.stdout.write(
+                    f"Imported property: {property_obj.title}"
+                )
+                self.stdout.write(
+                    self.style.SUCCESS(
+                        f"""
+                        Properties import completed.
 
-        images = pd.read_csv(
-            "data/property_images.csv"
-        )
-
-        for _, row in images.iterrows():
-
-            property_obj = Property.objects.get(
-                id=row["property_id"]
-            )
-
-            PropertyImage.objects.update_or_create(
-                id=row["image_id"],
-                defaults={
-
-                    "property": property_obj,
-
-                    "image": row["image_path"],
-
-                    "alt_text": row["alt_text"],
-
-                    "caption": row["caption"],
-
-                    "is_primary": row["is_primary"],
-
-                    "sort_order": row["sort_order"],
-                }
-            )
-
-        self.stdout.write(
-            self.style.SUCCESS(
-                "All data imported successfully!"
-            )
-        )
+                        Created: {created}
+                        Updated: {updated}
+                        """
+                        )
+                    )

@@ -1,0 +1,133 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+    <title>
+        {% block title %}
+        GeoProperty
+        {% endblock %}
+    </title>
+
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+
+</head>
+
+
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col">
+
+
+<!-- Minimal Navbar -->
+
+<header class="bg-white border-b">
+
+    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+
+
+        <!-- Logo -->
+
+        <a 
+        href="{% url 'home' %}"
+        class="text-2xl font-bold text-blue-600"
+        >
+            GeoProperty
+        </a>
+
+
+
+        <!-- Navigation -->
+
+        <nav class="flex gap-6 text-gray-600">
+
+
+            <a
+            href="{% url 'home' %}"
+            class="hover:text-blue-600"
+            >
+                Home
+            </a>
+
+
+
+            <a
+            href="{% url 'property_list' %}"
+            class="hover:text-blue-600"
+            >
+                Properties
+            </a>
+
+
+        </nav>
+
+
+    </div>
+
+
+</header>
+
+
+
+
+
+<!-- Main Content -->
+
+<main class="flex-1 max-w-7xl mx-auto w-full px-6 py-8">
+
+
+    {% block content %}
+    {% endblock %}
+
+
+</main>
+
+
+
+
+
+
+<!-- Minimal Footer -->
+
+<footer class="bg-white border-t mt-10">
+
+
+    <div class="max-w-7xl mx-auto px-6 py-6 text-center">
+
+
+        <p class="font-semibold text-gray-700">
+            GeoProperty System
+        </p>
+
+
+        <p class="text-sm text-gray-500 mt-2">
+
+            Location-based property discovery powered by GeoDjango.
+
+        </p>
+
+
+
+        <p class="text-xs text-gray-400 mt-3">
+
+            © {% now "Y" %} GeoProperty. All rights reserved.
+
+        </p>
+
+
+    </div>
+
+
+</footer>
+
+
+<script src="{% static 'js/location_autocomplete.js' %}"></script>
+</body>
+
+</html>

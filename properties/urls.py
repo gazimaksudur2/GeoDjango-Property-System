@@ -1,35 +1,17 @@
-from django.urls import path, include
-
-from rest_framework.routers import DefaultRouter
-
-from .views import (
-    LocationViewSet,
-    PropertyViewSet,
-    PropertyImageViewSet,
-)
-
-
-router = DefaultRouter()
-
-router.register(
-    "locations",
-    LocationViewSet
-)
-
-router.register(
-    "properties",
-    PropertyViewSet
-)
-
-router.register(
-    "images",
-    PropertyImageViewSet
-)
-
+from django.urls import path
+from . import views
 
 urlpatterns = [
+
     path(
         "",
-        include(router.urls)
-    )
+        views.property_list,
+        name="property_list"
+    ),
+
+    path(
+        "<slug:slug>/",
+        views.property_detail,
+        name="property_detail"
+    ),
 ]

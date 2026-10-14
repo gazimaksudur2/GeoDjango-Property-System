@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+
+
+{% block title %}
+Properties
+{% endblock %}
+
+
+
+{% block content %}
+
+
+
+<div class="flex justify-between items-center mb-8">
+
+
+<h1 class="text-3xl font-bold">
+
+
+{% if location_query %}
+
+Properties in {{ location_query }}
+
+{% else %}
+
+All Properties
+
+{% endif %}
+
+
+</h1>
+
+
+<p class="text-gray-500">
+
+{{ page_obj.paginator.count }} properties found
+
+</p>
+
+
+</div>
+
+
+
+
+<div class="grid md:grid-cols-3 gap-6">
+
+
+{% for property in page_obj %}
+
+
+{% include "properties/components/property_card.html" %}
+
+
+{% empty %}
+
+<p>No properties available.</p>
+
+
+{% endfor %}
+
+
+</div>
+
+
+
+
+<div class="flex justify-center gap-4 mt-10">
+
+
+{% if page_obj.has_previous %}
+
+<a
+
+href="?page={{ page_obj.previous_page_number }}"
+
+class="px-4 py-2 bg-white rounded shadow"
+
+>
+
+Previous
+
+</a>
+
+{% endif %}
+
+
+
+
+<span class="px-4 py-2">
+
+{{ page_obj.number }}
+
+</span>
+
+
+
+
+{% if page_obj.has_next %}
+
+<a
+
+href="?page={{ page_obj.next_page_number }}"
+
+class="px-4 py-2 bg-white rounded shadow"
+
+>
+
+Next
+
+</a>
+
+
+{% endif %}
+
+
+</div>
+
+
+
+{% endblock %}
