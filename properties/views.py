@@ -1,4 +1,3 @@
-# properties/views.py
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.measure import D
 from django.core.paginator import Paginator
@@ -63,7 +62,6 @@ def property_list(request):
             query_embedding = generate_embedding(location_query)
 
             if search_type == "location":
-                # --- MODE 1: LOCATION SEARCH (Semantic Location + PostGIS DWithin) ---
                 if target_id:
                     matched_location = Location.objects.filter(
                         id=target_id, is_active=True
@@ -121,7 +119,6 @@ def property_list(request):
                     properties = Property.objects.none()
 
             elif search_type == "property":
-                # --- MODE 2: PROPERTY SEARCH (Direct Semantic Vector + Keyword Match) ---
                 properties = (
                     properties.filter(embedding__isnull=False)
                     .annotate(
@@ -155,7 +152,6 @@ def property_list(request):
                     .order_by("exact_boost", "similarity")
                 )
 
-                # Determine the reference property (selected from autocomplete or top-ranked)
                 if target_id:
                     matched_property = Property.objects.filter(
                         id=target_id, is_active=True
@@ -163,7 +159,6 @@ def property_list(request):
                 if not matched_property:
                     matched_property = properties.first()
 
-                # Annotate distance of every property from the reference property
                 if matched_property and matched_property.point:
                     anchor_label = matched_property.title
                     properties = properties.annotate(
@@ -216,7 +211,6 @@ def property_detail(request, slug):
         "Garden",
     ]
 
-    # Calculate 3 nearest properties from the selected property using PostGIS Distance
     nearby_properties = []
     if property_obj.point:
         nearby_properties = (

@@ -1,4 +1,3 @@
-// static/js/location_autocomplete.js
 document.addEventListener("DOMContentLoaded", () => {
   const input = document.getElementById("location-search");
   const suggestions = document.getElementById("suggestions");
@@ -14,18 +13,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   let debounceTimer = null;
 
-  // 1. Synchronize Toggle Button UI, Placeholder, and Radius Visibility
-  function setSearchMode(mode, retriggerAutocomplete = true) {
+  function setSearchMode(mode, clearInput = false) {
     const normalizedMode = mode === "property" ? "property" : "location";
     searchTypeInput.value = normalizedMode;
 
-    if (targetIdInput) {
-      targetIdInput.value = "";
-    }
-
-    // Clear input value when switching modes to avoid mismatched queries
-    if (input) {
+    if (clearInput) {
       input.value = "";
+      if (targetIdInput) {
+        targetIdInput.value = "";
+      }
     }
 
     modeButtons.forEach((btn) => {
@@ -55,7 +51,6 @@ document.addEventListener("DOMContentLoaded", () => {
     suggestions.classList.add("hidden");
   }
 
-  // 2. Function A: Location Mode Autocomplete -> /api/v1/locations/autocomplete/
   async function fetchLocationSuggestions(query) {
     const response = await fetch(
       `/api/v1/locations/autocomplete/?q=${encodeURIComponent(query)}`
@@ -65,7 +60,6 @@ document.addEventListener("DOMContentLoaded", () => {
     renderLocationDropdown(locations);
   }
 
-  // 3. Function B: Property Mode Autocomplete -> /api/v1/properties/autocomplete/
   async function fetchPropertySuggestions(query) {
     const response = await fetch(
       `/api/v1/properties/autocomplete/?q=${encodeURIComponent(query)}`
@@ -75,7 +69,6 @@ document.addEventListener("DOMContentLoaded", () => {
     renderPropertyDropdown(properties);
   }
 
-  // 4. Mode Dispatcher
   async function dispatchAutocomplete(query) {
     try {
       const currentMode = searchTypeInput.value || "location";
@@ -90,7 +83,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // 5. Render Location Suggestions
   function renderLocationDropdown(locations) {
     suggestions.innerHTML = "";
     if (!locations || !locations.length) {
@@ -129,7 +121,6 @@ document.addEventListener("DOMContentLoaded", () => {
     suggestions.classList.remove("hidden");
   }
 
-  // 6. Render Property Suggestions
   function renderPropertyDropdown(properties) {
     suggestions.innerHTML = "";
     if (!properties || !properties.length) {
@@ -171,15 +162,17 @@ document.addEventListener("DOMContentLoaded", () => {
     suggestions.classList.remove("hidden");
   }
 
-  // Bind Toggle Button Clicks
   modeButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
       const selectedMode = btn.getAttribute("data-mode");
-      setSearchMode(selectedMode, true);
+      if (searchTypeInput.value !== selectedMode) {
+        setSearchMode(selectedMode, true);
+      }
     });
   });
 
-  // Bind Typing Input with Debounce
+  setSearchMode(searchTypeInput.value || "location", false);
+
   input.addEventListener("input", () => {
     if (targetIdInput) {
       targetIdInput.value = "";
@@ -198,13 +191,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 300);
   });
 
-  // Hide Suggestions When Clicking Outside
   document.addEventListener("click", (e) => {
     if (!input.contains(e.target) && !suggestions.contains(e.target)) {
       suggestions.classList.add("hidden");
     }
   });
 
-  // Initialize Mode on Page Load
   setSearchMode(searchTypeInput.value || "location", false);
 });

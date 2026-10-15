@@ -1,4 +1,3 @@
-# properties/forms.py
 import re
 from django import forms
 
@@ -111,7 +110,6 @@ class PropertySearchForm(forms.Form):
                 raise forms.ValidationError(
                     "Search query must be at least 2 characters long."
                 )
-            # Allow letters, numbers, spaces, and common property/location punctuation: , - . ' " & ( ) / # : + |
             if not re.match(r"^[a-zA-Z0-9\s,\-\.'\"&()/#:+|]+$", location):
                 raise forms.ValidationError(
                     "Search query contains invalid special characters."

@@ -1,4 +1,3 @@
-# properties/tests.py
 from django.contrib.gis.geos import Point
 from django.test import TestCase
 from django.urls import reverse

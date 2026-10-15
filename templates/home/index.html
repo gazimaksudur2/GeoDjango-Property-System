@@ -19,7 +19,6 @@ Find Properties
         {{ form.target_id }}
 
         <div class="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
-            <!-- Toggle Button Group Beside Search Input -->
             <div class="inline-flex rounded-lg border border-gray-300 bg-gray-100 p-1 shrink-0" role="group" aria-label="Search Mode Toggle">
                 <button type="button"
                         data-mode="location"
@@ -33,13 +32,11 @@ Find Properties
                 </button>
             </div>
 
-            <!-- Main Search Field + Autocomplete Dropdown -->
             <div class="relative flex-1">
                 {{ form.location }}
                 <div id="suggestions" class="absolute z-20 bg-white border rounded-lg shadow-lg w-full hidden mt-1 max-h-80 overflow-y-auto"></div>
             </div>
 
-            <!-- Radius Field (Automatically hidden in Property mode) -->
             <div id="radius-container">
                 {{ form.radius }}
             </div>

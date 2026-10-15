@@ -1,4 +1,3 @@
-# properties/api/views.py
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -120,7 +119,6 @@ class PropertyViewSet(viewsets.ModelViewSet):
         results = []
         seen_ids = set()
 
-        # 1. Exact/substring matches on property title or type
         exact_properties = (
             Property.objects.select_related("location")
             .filter(
@@ -134,7 +132,6 @@ class PropertyViewSet(viewsets.ModelViewSet):
             seen_ids.add(prop_data["id"])
             results.append(prop_data)
 
-        # 2. Semantic vector search via pgvector CosineDistance
         query_embedding = generate_embedding(cleaned_query)
         semantic_properties = (
             Property.objects.select_related("location")

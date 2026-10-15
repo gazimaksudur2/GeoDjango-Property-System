@@ -87,5 +87,3 @@ python manage.py runserver
 | `/api/v1/properties/semantic_search/?q=<str>` | `GET` | Top 10 properties ranked by `CosineDistance` |
 | `/api/v1/properties/hybrid_search/?q=<str>&lng=<x>&lat=<y>&radius=5` | `GET` | Spatial radius filter combined with vector similarity ranking |
 | `/api/v1/properties/location_hybrid_search/?q=<str>` | `GET` | Resolves semantic location first, then ranks its properties by vector similarity |
-
-```
