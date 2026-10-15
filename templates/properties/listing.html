@@ -5,60 +5,33 @@ Properties
 {% endblock %}
 
 {% block content %}
-<div class="bg-white shadow-sm rounded-xl p-6 mb-8">
-    <form method="GET" action="{% url 'property_list' %}" class="space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-6 gap-3">
-            <div class="relative md:col-span-2">
-                {{ form.location }}
-                <div id="suggestions" class="absolute z-10 bg-white border rounded-lg shadow-lg w-full hidden mt-1"></div>
-            </div>
-            <div>
-                {{ form.radius }}
-            </div>
-            <div>
-                {{ form.min_price }}
-            </div>
-            <div>
-                {{ form.max_price }}
-            </div>
-            <div>
-                {{ form.bedrooms }}
-            </div>
-        </div>
-
-        <div class="flex justify-end gap-3">
-            <a href="{% url 'property_list' %}" class="px-4 py-2 text-gray-600 border rounded-lg hover:bg-gray-50">
-                Reset
-            </a>
-            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-medium">
-                Apply Filters
-            </button>
-        </div>
-
-        {% if form.errors %}
-        <div class="p-3 bg-red-50 text-red-600 rounded-lg text-sm">
-            {% for field, errors in form.errors.items %}
-                {% for error in errors %}
-                    <p>{{ error }}</p>
-                {% endfor %}
-            {% endfor %}
-        </div>
-        {% endif %}
-    </form>
-</div>
+{% include "properties/components/search_box.html" %}
 
 <div class="flex justify-between items-center mb-8">
     <div>
+        <div class="flex items-center gap-2 mb-1">
+            <span class="px-3 py-1 text-xs font-semibold rounded-full {% if search_type == 'property' %}bg-purple-100 text-purple-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+                {% if search_type == 'property' %}
+                    🏠 Property Semantic Search Mode
+                {% else %}
+                    📍 Location Spatial + Semantic Mode
+                {% endif %}
+            </span>
+        </div>
         <h1 class="text-3xl font-bold">
             {% if location_query %}
-                Properties matching "{{ location_query }}"
+                {% if search_type == 'property' %}
+                    Properties matching "{{ location_query }}"
+                {% else %}
+                    Properties near "{{ location_query }}"
+                {% endif %}
             {% else %}
                 All Properties
             {% endif %}
         </h1>
-        {% if matched_location %}
+        {% if search_type == 'location' and matched_location %}
         <p class="text-sm text-blue-600 mt-1">
-            Spatial search anchored near: {{ matched_location.name }}, {{ matched_location.city }}
+            Spatial PostGIS search anchored near: <strong>{{ matched_location.name }}, {{ matched_location.city }}</strong>
         </p>
         {% endif %}
     </div>
@@ -73,26 +46,10 @@ Properties
         {% include "properties/components/property_card.html" %}
     {% empty %}
         <p class="text-gray-500 col-span-3 text-center py-12">
-            No properties found matching your criteria.
+            No properties found matching your criteria. Try switching the toggle between <strong>Location</strong> and <strong>Property</strong>.
         </p>
     {% endfor %}
 </div>
 
-<div class="flex justify-center items-center gap-4 mt-10">
-    {% if page_obj.has_previous %}
-    <a href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ page_obj.previous_page_number }}" class="px-4 py-2 bg-white rounded shadow hover:bg-gray-50">
-        Previous
-    </a>
-    {% endif %}
-
-    <span class="px-4 py-2 font-medium">
-        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-    </span>
-
-    {% if page_obj.has_next %}
-    <a href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ page_obj.next_page_number }}" class="px-4 py-2 bg-white rounded shadow hover:bg-gray-50">
-        Next
-    </a>
-    {% endif %}
-</div>
+{% include "properties/components/pagination.html" %}
 {% endblock %}

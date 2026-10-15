@@ -1,3 +1,4 @@
+# properties/api/serializers.py
 from rest_framework import serializers
 
 from ..models import (
@@ -7,12 +8,24 @@ from ..models import (
 )
 
 
-class DistanceField(serializers.Field):
+class AutocompleteQuerySerializer(serializers.Serializer):
+    """Validates incoming autocomplete query parameters (Criterion 15)."""
+    q = serializers.CharField(min_length=2, max_length=150, required=True)
+    limit = serializers.IntegerField(min_value=1, max_value=20, default=8, required=False)
 
+    def validate_q(self, value):
+        cleaned = value.strip()
+        if len(cleaned) < 2:
+            raise serializers.ValidationError(
+                "Query parameter 'q' must be at least 2 characters long."
+            )
+        return cleaned
+
+
+class DistanceField(serializers.Field):
     def to_representation(self, value):
         if value is None:
             return None
-
         return {
             "meters": round(value.m, 2),
             "kilometers": round(value.km, 3),
@@ -55,8 +68,28 @@ class LocationSerializer(serializers.ModelSerializer):
         return value
 
 
-class PropertyImageSerializer(serializers.ModelSerializer):
+class PropertyAutocompleteSerializer(serializers.ModelSerializer):
+    """Lightweight serializer for Property mode autocomplete dropdown."""
+    location_name = serializers.CharField(source="location.name", read_only=True)
+    city = serializers.CharField(source="location.city", read_only=True)
+    similarity = serializers.FloatField(read_only=True)
 
+    class Meta:
+        model = Property
+        fields = [
+            "id",
+            "title",
+            "slug",
+            "property_type",
+            "price",
+            "bedrooms",
+            "location_name",
+            "city",
+            "similarity",
+        ]
+
+
+class PropertyImageSerializer(serializers.ModelSerializer):
     class Meta:
         model = PropertyImage
         fields = [
@@ -158,7 +191,7 @@ class PropertySerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     {
                         "bedrooms":
-                        f"A {property_type}must have at least 1 bedroom."
+                        f"A {property_type} must have at least 1 bedroom."
                     }
                 )
 

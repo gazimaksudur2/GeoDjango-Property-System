@@ -1,23 +1,24 @@
+# properties/views.py
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.measure import D
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import Case, IntegerField, Q, Value, When
 from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 from pgvector.django import CosineDistance
 
 from .forms import PropertySearchForm
 from .models import Location, Property
 from .utils.embeddings import generate_embedding
-from django.urls import reverse
-from django.utils.http import url_has_allowed_host_and_scheme
 
 
 def home(request):
-    form = PropertySearchForm()
+    form = PropertySearchForm(initial={"search_type": "location"})
     return render(
         request,
         "home/index.html",
-        {"form": form},
+        {"form": form, "search_type": "location"},
     )
 
 
@@ -32,9 +33,14 @@ def property_list(request):
     )
 
     location_query = ""
+    search_type = request.GET.get("search_type", "location")
+    if search_type not in {"location", "property"}:
+        search_type = "location"
     matched_location = None
 
     if form.is_valid():
+        search_type = form.cleaned_data.get("search_type") or "location"
+        target_id = form.cleaned_data.get("target_id")
         location_query = form.cleaned_data.get("location")
         radius_km = form.cleaned_data.get("radius") or 10.0
         min_price = form.cleaned_data.get("min_price")
@@ -53,64 +59,113 @@ def property_list(request):
         if location_query:
             query_embedding = generate_embedding(location_query)
 
-            matched_location = (
-                Location.objects.filter(
-                    Q(name__icontains=location_query)
-                    | Q(city__icontains=location_query),
-                    is_active=True,
-                ).first()
-            )
+            if search_type == "location":
+                # --- MODE 1: LOCATION SEARCH (Semantic Location + PostGIS DWithin) ---
+                if target_id:
+                    matched_location = Location.objects.filter(
+                        id=target_id, is_active=True
+                    ).first()
 
-            if not matched_location:
-                matched_location = (
-                    Location.objects.filter(
-                        embedding__isnull=False,
+                if not matched_location:
+                    matched_location = Location.objects.filter(
+                        Q(name__icontains=location_query)
+                        | Q(city__icontains=location_query),
                         is_active=True,
-                    )
-                    .annotate(
-                        loc_similarity=CosineDistance(
-                            "embedding",
-                            query_embedding,
-                        )
-                    )
-                    .order_by("loc_similarity")
-                    .first()
-                )
+                    ).first()
 
-            if matched_location and matched_location.point:
-                properties = (
-                    properties.filter(
-                        Q(
-                            point__dwithin=(
-                                matched_location.point,
-                                D(km=radius_km),
+                if not matched_location:
+                    matched_location = (
+                        Location.objects.filter(
+                            embedding__isnull=False,
+                            is_active=True,
+                        )
+                        .annotate(
+                            loc_similarity=CosineDistance(
+                                "embedding",
+                                query_embedding,
                             )
                         )
-                        | Q(location=matched_location)
+                        .filter(loc_similarity__lte=0.55)
+                        .order_by("loc_similarity")
+                        .first()
                     )
-                    .annotate(
-                        search_distance=Distance(
-                            "point",
-                            matched_location.point,
-                        ),
-                        similarity=CosineDistance(
-                            "embedding",
-                            query_embedding,
-                        ),
+
+                if matched_location and matched_location.point:
+                    properties = (
+                        properties.filter(
+                            Q(
+                                point__dwithin=(
+                                    matched_location.point,
+                                    D(km=radius_km),
+                                )
+                            )
+                            | Q(location=matched_location)
+                        )
+                        .annotate(
+                            search_distance=Distance(
+                                "point",
+                                matched_location.point,
+                            ),
+                            similarity=CosineDistance(
+                                "embedding",
+                                query_embedding,
+                            ),
+                        )
+                        .order_by("search_distance", "similarity")
                     )
-                    .order_by("similarity", "search_distance")
+                else:
+                    properties = Property.objects.none()
+
+            elif search_type == "property":
+                # --- MODE 2: PROPERTY SEARCH (Direct Semantic Vector + Keyword Match) ---
+                properties = properties.annotate(
+                    similarity=CosineDistance(
+                        "embedding",
+                        query_embedding,
+                    ),
+                    exact_boost=Case(
+                        When(id=target_id, then=Value(0))
+                        if target_id
+                        else When(pk__isnull=True, then=Value(0)),
+                        When(title__icontains=location_query, then=Value(1)),
+                        default=Value(2),
+                        output_field=IntegerField(),
+                    ),
+                ).filter(
+                    Q(id=target_id)
+                    if target_id
+                    else (
+                        Q(title__icontains=location_query)
+                        | Q(description__icontains=location_query)
+                        | Q(property_type__icontains=location_query)
+                        | Q(similarity__lte=0.68)
+                    )
                 )
-            else:
-                properties = (
-                    properties.filter(embedding__isnull=False)
-                    .annotate(
-                        similarity=CosineDistance(
-                            "embedding",
-                            query_embedding,
+
+                # If user clicked a specific property from autocomplete, show it first + similar properties
+                if target_id:
+                    properties = (
+                        Property.objects.filter(is_active=True)
+                        .select_related("location")
+                        .prefetch_related("images")
+                        .annotate(
+                            city_distance=Distance("point", "location__point"),
+                            similarity=CosineDistance("embedding", query_embedding),
+                            exact_boost=Case(
+                                When(id=target_id, then=Value(0)),
+                                default=Value(1),
+                                output_field=IntegerField(),
+                            ),
                         )
                     )
-                    .order_by("similarity")
-                )
+                    if min_price is not None:
+                        properties = properties.filter(price__gte=min_price)
+                    if max_price is not None:
+                        properties = properties.filter(price__lte=max_price)
+                    if bedrooms is not None:
+                        properties = properties.filter(bedrooms__gte=bedrooms)
+
+                properties = properties.order_by("exact_boost", "similarity")
         else:
             properties = properties.order_by("-is_featured", "-created_at")
     else:
@@ -131,6 +186,7 @@ def property_list(request):
             "form": form,
             "page_obj": page_obj,
             "location_query": location_query,
+            "search_type": search_type,
             "matched_location": matched_location,
             "query_string": query_params.urlencode(),
         },

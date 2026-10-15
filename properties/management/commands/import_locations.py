@@ -35,36 +35,24 @@ class Command(BaseCommand):
         updated = 0
 
         for _, row in locations.iterrows():
-
             location, is_created = Location.objects.update_or_create(
-                slug=row["slug"],
-
+                id=int(row["location_id"]),
                 defaults={
-                    "name": row["name"],
-                    "country": row["country"],
-                    "state": row["state"],
-                    "city": row["city"],
-                    "address": row["address"],
-
+                    "slug": self.clean(row["slug"]),
+                    "name": self.clean(row["name"]),
+                    "country": self.clean(row["country"]),
+                    "state": self.clean(row["state"]),
+                    "city": self.clean(row["city"]),
+                    "address": self.clean(row["address"]),
                     "point": Point(
                         float(row["longitude"]),
                         float(row["latitude"]),
-                        srid=4326
+                        srid=4326,
                     ),
-
                     "is_active": bool(row["is_active"]),
-                }
+                },
             )
-
-            if is_created:
-                created += 1
-            else:
-                updated += 1
-
-            self.stdout.write(
-                f"Imported location: {location.name}"
-            )
-
+            
         self.stdout.write(
             self.style.SUCCESS(
                 f"""

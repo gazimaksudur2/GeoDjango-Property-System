@@ -1,0 +1,58 @@
+<div class="bg-white shadow-sm rounded-xl p-6 mb-8">
+    <form id="property-search-form" method="GET" action="{% url 'property_list' %}" class="space-y-4">
+        {{ form.search_type }}
+        {{ form.target_id }}
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
+            <!-- Toggle Button Group Beside Search Field -->
+            <div class="md:col-span-3 flex">
+                <div class="inline-flex w-full rounded-lg border border-gray-300 bg-gray-100 p-1" role="group" aria-label="Search Mode Toggle">
+                    <button type="button"
+                            data-mode="location"
+                            class="search-mode-btn flex-1 px-3 py-2 text-sm font-semibold rounded-md transition {% if search_type != 'property' %}bg-blue-600 text-white shadow-sm{% else %}text-gray-700 hover:text-gray-900{% endif %}">
+                        📍 Location
+                    </button>
+                    <button type="button"
+                            data-mode="property"
+                            class="search-mode-btn flex-1 px-3 py-2 text-sm font-semibold rounded-md transition {% if search_type == 'property' %}bg-blue-600 text-white shadow-sm{% else %}text-gray-700 hover:text-gray-900{% endif %}">
+                        🏠 Property
+                    </button>
+                </div>
+            </div>
+
+            <!-- Search Input with Autocomplete Dropdown -->
+            <div class="relative md:col-span-4">
+                {{ form.location }}
+                <div id="suggestions" class="absolute z-20 bg-white border rounded-lg shadow-lg w-full hidden mt-1 max-h-80 overflow-y-auto"></div>
+            </div>
+
+            <!-- Radius Input (Disabled/Hidden in Property Mode) -->
+            <div id="radius-container" class="md:col-span-2 {% if search_type == 'property' %}hidden{% endif %}">
+                {{ form.radius }}
+            </div>
+
+            <div class="md:col-span-1">{{ form.min_price }}</div>
+            <div class="md:col-span-1">{{ form.max_price }}</div>
+            <div class="md:col-span-1">{{ form.bedrooms }}</div>
+        </div>
+
+        <div class="flex justify-end gap-3">
+            <a href="{% url 'property_list' %}" class="px-4 py-2 text-gray-600 border rounded-lg hover:bg-gray-50">
+                Reset
+            </a>
+            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-medium">
+                Apply Filters
+            </button>
+        </div>
+
+        {% if form.errors %}
+        <div class="p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+            {% for field, errors in form.errors.items %}
+                {% for error in errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </form>
+</div>

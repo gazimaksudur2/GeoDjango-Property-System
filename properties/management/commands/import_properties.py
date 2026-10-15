@@ -89,16 +89,12 @@ class Command(BaseCommand):
                 created += 1
             else:
                 updated += 1
-                self.stdout.write(
-                    f"Imported property: {property_obj.title}"
-                )
-                self.stdout.write(
-                    self.style.SUCCESS(
-                        f"""
-                        Properties import completed.
 
-                        Created: {created}
-                        Updated: {updated}
-                        """
-                        )
-                    )
+            self.stdout.write(f"Imported property: {property_obj.title}")
+
+        self.stdout.write(
+            self.style.SUCCESS(
+                "Properties import completed. Created"
+                + f": {created}, Updated: {updated}"
+            )
+        )

@@ -1,8 +1,25 @@
+# properties/forms.py
 import re
 from django import forms
 
 
 class PropertySearchForm(forms.Form):
+    SEARCH_TYPE_CHOICES = (
+        ("location", "Location"),
+        ("property", "Property"),
+    )
+
+    search_type = forms.ChoiceField(
+        choices=SEARCH_TYPE_CHOICES,
+        initial="location",
+        required=False,
+        widget=forms.HiddenInput(attrs={"id": "search-type-input"}),
+    )
+    target_id = forms.IntegerField(
+        required=False,
+        min_value=1,
+        widget=forms.HiddenInput(attrs={"id": "target-id-input"}),
+    )
     location = forms.CharField(
         required=False,
         max_length=150,
@@ -10,10 +27,11 @@ class PropertySearchForm(forms.Form):
             attrs={
                 "id": "location-search",
                 "autocomplete": "off",
-                "placeholder": "Search location or vibe e.g."
-                + " Gulshan, luxury apartment",
-                "class": "w-full border rounded-lg px-4 py-3"
-                + " focus:ring-2 focus:ring-blue-400",
+                "placeholder": "Search by location (e.g., Gulshan, Banani, Dhanmondi)...",
+                "class": (
+                    "w-full border rounded-lg px-4 py-3 "
+                    "focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                ),
             }
         ),
     )
@@ -24,10 +42,13 @@ class PropertySearchForm(forms.Form):
         max_value=100.0,
         widget=forms.NumberInput(
             attrs={
+                "id": "radius-input",
                 "placeholder": "Radius (km)",
                 "step": "0.5",
-                "class": "w-full md:w-36 border rounded-lg px-4 py-3"
-                + " focus:ring-2 focus:ring-blue-400",
+                "class": (
+                    "w-full md:w-36 border rounded-lg px-4 py-3 "
+                    "focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                ),
             }
         ),
     )
@@ -39,8 +60,10 @@ class PropertySearchForm(forms.Form):
         widget=forms.NumberInput(
             attrs={
                 "placeholder": "Min Price",
-                "class": "w-full border rounded-lg px-4 py-2 focus:ring-2"
-                + " focus:ring-blue-400",
+                "class": (
+                    "w-full border rounded-lg px-4 py-2 "
+                    "focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                ),
             }
         ),
     )
@@ -52,8 +75,10 @@ class PropertySearchForm(forms.Form):
         widget=forms.NumberInput(
             attrs={
                 "placeholder": "Max Price",
-                "class": "w-full border rounded-lg px-4 py-2 focus:ring-2"
-                + " focus:ring-blue-400",
+                "class": (
+                    "w-full border rounded-lg px-4 py-2 "
+                    "focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                ),
             }
         ),
     )
@@ -64,11 +89,19 @@ class PropertySearchForm(forms.Form):
         widget=forms.NumberInput(
             attrs={
                 "placeholder": "Min Beds",
-                "class": "w-full border rounded-lg px-4 py-2"
-                + " focus:ring-2 focus:ring-blue-400",
+                "class": (
+                    "w-full border rounded-lg px-4 py-2 "
+                    "focus:ring-2 focus:ring-blue-400 focus:outline-none"
+                ),
             }
         ),
     )
+
+    def clean_search_type(self):
+        search_type = (self.cleaned_data.get("search_type") or "location").strip().lower()
+        if search_type not in {"location", "property"}:
+            raise forms.ValidationError("Search mode must be either 'location' or 'property'.")
+        return search_type
 
     def clean_location(self):
         location = self.cleaned_data.get("location", "")
@@ -76,11 +109,11 @@ class PropertySearchForm(forms.Form):
             location = location.strip()
             if len(location) < 2:
                 raise forms.ValidationError(
-                    "Location query must be at least 2 characters long."
+                    "Search query must be at least 2 characters long."
                 )
-            if not re.match(r"^[a-zA-Z0-9\s,\-\.]+$", location):
+            if not re.match(r"^[a-zA-Z0-9\s,\-\.'&]+$", location):
                 raise forms.ValidationError(
-                    "Location contains invalid special characters."
+                    "Search query contains invalid special characters."
                 )
         return location
 

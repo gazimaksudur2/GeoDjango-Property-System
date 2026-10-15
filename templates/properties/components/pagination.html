@@ -1,0 +1,19 @@
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="flex justify-center items-center gap-4 mt-10">
+    {% if page_obj.has_previous %}
+    <a href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ page_obj.previous_page_number }}" class="px-4 py-2 bg-white rounded shadow hover:bg-gray-50">
+        Previous
+    </a>
+    {% endif %}
+
+    <span class="px-4 py-2 font-medium">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </span>
+
+    {% if page_obj.has_next %}
+    <a href="?{% if query_string %}{{ query_string }}&{% endif %}page={{ page_obj.next_page_number }}" class="px-4 py-2 bg-white rounded shadow hover:bg-gray-50">
+        Next
+    </a>
+    {% endif %}
+</div>
+{% endif %}

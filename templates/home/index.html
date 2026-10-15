@@ -11,21 +11,40 @@ Find Properties
     </h1>
 
     <p class="text-gray-600 mb-8">
-        Search homes, apartments and villas by location or natural language.
+        Toggle between <strong>Location</strong> (PostGIS spatial radius + semantic city search) or <strong>Property</strong> (AI semantic property search).
     </p>
 
-    <form method="GET" action="{% url 'property_list' %}" class="bg-white shadow-lg rounded-xl p-6 text-left">
-        <div class="flex flex-col md:flex-row gap-3">
-            <div class="relative flex-1">
-                {{ form.location }}
-                <div id="suggestions" class="absolute z-10 bg-white border rounded-lg shadow-lg w-full hidden mt-1"></div>
+    <form id="property-search-form" method="GET" action="{% url 'property_list' %}" class="bg-white shadow-lg rounded-xl p-6 text-left">
+        {{ form.search_type }}
+        {{ form.target_id }}
+
+        <div class="flex flex-col md:flex-row gap-3 items-stretch md:items-center">
+            <!-- Toggle Button Group Beside Search Input -->
+            <div class="inline-flex rounded-lg border border-gray-300 bg-gray-100 p-1 shrink-0" role="group" aria-label="Search Mode Toggle">
+                <button type="button"
+                        data-mode="location"
+                        class="search-mode-btn px-4 py-2.5 text-sm font-semibold rounded-md transition bg-blue-600 text-white shadow-sm">
+                    📍 Location
+                </button>
+                <button type="button"
+                        data-mode="property"
+                        class="search-mode-btn px-4 py-2.5 text-sm font-semibold rounded-md transition text-gray-700 hover:text-gray-900">
+                    🏠 Property
+                </button>
             </div>
 
-            <div>
+            <!-- Main Search Field + Autocomplete Dropdown -->
+            <div class="relative flex-1">
+                {{ form.location }}
+                <div id="suggestions" class="absolute z-20 bg-white border rounded-lg shadow-lg w-full hidden mt-1 max-h-80 overflow-y-auto"></div>
+            </div>
+
+            <!-- Radius Field (Automatically hidden in Property mode) -->
+            <div id="radius-container">
                 {{ form.radius }}
             </div>
 
-            <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 font-medium">
+            <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 font-medium shrink-0">
                 Search
             </button>
         </div>

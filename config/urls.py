@@ -7,39 +7,28 @@ from properties.views import home
 
 
 urlpatterns = [
-
     path(
         "admin/",
-        admin.site.urls
+        admin.site.urls,
     ),
-
-
-    # API
     path(
         "api/v1/",
-        include("properties.api.urls")
+        include("properties.api.urls"),
     ),
-
-
-    # UI
     path(
         "properties/",
-        include("properties.urls")
+        include("properties.urls"),
     ),
-
-
     path(
         "",
         home,
-        name="home"
+        name="home",
     ),
-
 ]
 
 
 if settings.DEBUG:
-
     urlpatterns += static(
         settings.MEDIA_URL,
-        document_root=settings.MEDIA_ROOT
+        document_root=settings.MEDIA_ROOT,
     )
