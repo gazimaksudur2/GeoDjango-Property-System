@@ -11,13 +11,11 @@ from properties.utils.embeddings import generate_embedding
 from ..models import (
     Location,
     Property,
-    PropertyImage,
 )
 
 from .serializers import (
     LocationSerializer,
     PropertySerializer,
-    PropertyImageSerializer,
 )
 
 
@@ -457,54 +455,6 @@ class PropertyViewSet(viewsets.ModelViewSet):
         detail=False,
         methods=["get"]
     )
-    def similar(self, request):
-        image_id = request.GET.get(
-            "image_id"
-        )
-
-        if not image_id:
-            return Response(
-                {
-                    "error": "image_id required"
-                },
-                status=400
-            )
-        image = PropertyImage.objects.get(
-            id=image_id
-        )
-
-        images = (
-            PropertyImage.objects
-            .filter(
-                embedding__isnull=False
-            )
-            .exclude(
-                id=image.id
-            )
-            .annotate(
-                similarity=CosineDistance(
-                    "embedding",
-                    image.embedding
-                )
-            )
-            .order_by(
-                "similarity"
-            )[:10]
-        )
-
-        serializer = PropertyImageSerializer(
-            images,
-            many=True
-        )
-
-        return Response(
-            serializer.data
-        )
-
-    @action(
-        detail=False,
-        methods=["get"]
-    )
     def location_hybrid_search(self, request):
         query = request.GET.get("q")
 
@@ -574,8 +524,3 @@ class PropertyViewSet(viewsets.ModelViewSet):
                 "properties": serializer.data
             }
         )
-
-
-class PropertyImageViewSet(viewsets.ModelViewSet):
-    queryset = PropertyImage.objects.all()
-    serializer_class = PropertyImageSerializer

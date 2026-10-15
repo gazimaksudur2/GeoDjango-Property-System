@@ -92,21 +92,12 @@ class PropertyImage(models.Model):
     width = models.PositiveIntegerField(null=True, blank=True)
     height = models.PositiveIntegerField(null=True, blank=True)
     file_size = models.BigIntegerField(null=True, blank=True)
-    embedding = VectorField(dimensions=768, null=True, blank=True)
     is_primary = models.BooleanField(default=False)
     sort_order = models.PositiveIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    class Meta:
+        ordering = ["sort_order", "created_at"]
+
     def __str__(self):
         return f"{self.property.title} image"
-
-    class Meta:
-        indexes = [
-                HnswIndex(
-                    name="image_embedding_idx",
-                    fields=["embedding"],
-                    m=16,
-                    ef_construction=64,
-                    opclasses=["vector_cosine_ops"],
-                )
-            ]

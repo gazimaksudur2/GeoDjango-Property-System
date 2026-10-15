@@ -4,12 +4,9 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     LocationViewSet,
     PropertyViewSet,
-    PropertyImageViewSet,
 )
 
-
 router = DefaultRouter()
-
 
 router.register(
     "locations",
@@ -23,17 +20,9 @@ router.register(
     basename="property"
 )
 
-router.register(
-    "images",
-    PropertyImageViewSet,
-    basename="image"
-)
-
 urlpatterns = [
-
     path(
         "",
         include(router.urls)
     ),
-
 ]

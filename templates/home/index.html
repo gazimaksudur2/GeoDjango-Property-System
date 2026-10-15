@@ -1,77 +1,44 @@
 {% extends "base.html" %}
 
-
 {% block title %}
 Find Properties
 {% endblock %}
 
-
-
 {% block content %}
-
-
 <section class="max-w-4xl mx-auto text-center py-12">
+    <h1 class="text-4xl font-bold mb-4">
+        Find Your Perfect Property
+    </h1>
 
+    <p class="text-gray-600 mb-8">
+        Search homes, apartments and villas by location or natural language.
+    </p>
 
-<h1 class="text-4xl font-bold mb-4">
-    Find Your Perfect Property
-</h1>
+    <form method="GET" action="{% url 'property_list' %}" class="bg-white shadow-lg rounded-xl p-6 text-left">
+        <div class="flex flex-col md:flex-row gap-3">
+            <div class="relative flex-1">
+                {{ form.location }}
+                <div id="suggestions" class="absolute z-10 bg-white border rounded-lg shadow-lg w-full hidden mt-1"></div>
+            </div>
 
+            <div>
+                {{ form.radius }}
+            </div>
 
-<p class="text-gray-600 mb-8">
-    Search homes, apartments and villas by location.
-</p>
+            <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 font-medium">
+                Search
+            </button>
+        </div>
 
-
-
-
-<form 
-method="GET"
-action="/properties/"
-class="bg-white shadow-lg rounded-xl p-6"
->
-
-
-<div class="flex gap-3">
-
-<div class="relative flex-1">
-
-    <input
-        id="location-search"
-        type="text"
-        name="location"
-        autocomplete="off"
-        placeholder="Search location e.g. Gulshan"
-        class="w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-400"
-    >
-
-    <div
-        id="suggestions"
-        class="absolute z-10 bg-white border rounded-lg shadow-lg w-full hidden"
-    >
-    </div>
-
-</div>
-
-
-<button
-
-class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700"
-
->
-
-Search
-
-</button>
-
-
-</div>
-
-
-</form>
-
-
+        {% if form.errors %}
+        <div class="mt-4 p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+            {% for field, errors in form.errors.items %}
+                {% for error in errors %}
+                    <p>{{ error }}</p>
+                {% endfor %}
+            {% endfor %}
+        </div>
+        {% endif %}
+    </form>
 </section>
-
-
 {% endblock %}

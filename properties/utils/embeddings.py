@@ -1,15 +1,13 @@
+from functools import lru_cache
 from sentence_transformers import SentenceTransformer
 
 
-model = SentenceTransformer(
-    "all-MiniLM-L6-v2"
-)
+@lru_cache(maxsize=1)
+def get_embedding_model():
+    return SentenceTransformer("all-MiniLM-L6-v2")
 
 
 def generate_embedding(text):
-
-    embedding = model.encode(
-        text
-    )
-
+    model = get_embedding_model()
+    embedding = model.encode(text)
     return embedding.tolist()
