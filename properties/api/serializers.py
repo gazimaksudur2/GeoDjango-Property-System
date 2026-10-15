@@ -10,21 +10,17 @@ from ..models import (
 class DistanceField(serializers.Field):
 
     def to_representation(self, value):
-
         if value is None:
             return None
 
         return {
             "meters": round(value.m, 2),
-            "kilometers": round(value.km, 3)
+            "kilometers": round(value.km, 3),
         }
 
 
 class LocationSerializer(serializers.ModelSerializer):
-
-    similarity = serializers.FloatField(
-        read_only=True
-    )
+    similarity = serializers.FloatField(read_only=True)
 
     class Meta:
         model = Location
@@ -40,6 +36,24 @@ class LocationSerializer(serializers.ModelSerializer):
             "similarity",
         ]
 
+    def validate_name(self, value):
+        cleaned = value.strip()
+        if len(cleaned) < 2:
+            raise serializers.ValidationError(
+                "Location name must be at least 2 characters long."
+            )
+        return cleaned
+
+    def validate_point(self, value):
+        if value is not None:
+            lng, lat = value.x, value.y
+            if not (-180.0 <= lng <= 180.0 and -90.0 <= lat <= 90.0):
+                raise serializers.ValidationError(
+                    "Coordinates out of range. Longitude must be between"
+                    + " -180 and 180, and latitude between -90 and 90."
+                )
+        return value
+
 
 class PropertyImageSerializer(serializers.ModelSerializer):
 
@@ -49,27 +63,29 @@ class PropertyImageSerializer(serializers.ModelSerializer):
             "id",
             "image",
             "caption",
-            "alt_text"
+            "alt_text",
+            "is_primary",
+            "sort_order",
         ]
+
+    def validate_sort_order(self, value):
+        if value < 0:
+            raise serializers.ValidationError(
+                "Sort order cannot be negative."
+            )
+        return value
 
 
 class PropertySerializer(serializers.ModelSerializer):
     images = PropertyImageSerializer(
         many=True,
-        read_only=True
+        read_only=True,
     )
-
-    distance = DistanceField(
-        read_only=True
-    )
-
-    similarity = serializers.FloatField(
-        read_only=True
-    )
+    distance = DistanceField(read_only=True)
+    similarity = serializers.FloatField(read_only=True)
 
     class Meta:
         model = Property
-
         fields = [
             "id",
             "location",
@@ -93,3 +109,66 @@ class PropertySerializer(serializers.ModelSerializer):
             "images",
             "distance",
         ]
+
+    def validate_title(self, value):
+        cleaned = value.strip()
+        if len(cleaned) < 5:
+            raise serializers.ValidationError(
+                "Property title must be at least 5 characters long."
+            )
+        return cleaned
+
+    def validate_price(self, value):
+        if value <= 0:
+            raise serializers.ValidationError(
+                "Property price must be greater than zero."
+            )
+        return value
+
+    def validate_area_sqft(self, value):
+        if value is not None and value <= 0:
+            raise serializers.ValidationError(
+                "Property area in sqft must be greater than zero."
+            )
+        return value
+
+    def validate(self, attrs):
+        bedrooms = attrs.get("bedrooms", getattr(self.instance, "bedrooms", 0))
+        bathrooms = attrs.get(
+            "bathrooms",
+            getattr(self.instance, "bathrooms", 0)
+        )
+        property_type = attrs.get(
+            "property_type",
+            getattr(self.instance, "property_type", ""),
+        )
+        point = attrs.get("point", getattr(self.instance, "point", None))
+
+        if bedrooms < 0 or bathrooms < 0:
+            raise serializers.ValidationError(
+                "Bedrooms and bathrooms cannot be negative."
+            )
+
+        if property_type and property_type.lower() in {
+            "apartment",
+            "villa",
+            "house"
+        }:
+            if bedrooms == 0:
+                raise serializers.ValidationError(
+                    {
+                        "bedrooms":
+                        f"A {property_type}must have at least 1 bedroom."
+                    }
+                )
+
+        if point is not None:
+            lng, lat = point.x, point.y
+            if not (-180.0 <= lng <= 180.0 and -90.0 <= lat <= 90.0):
+                raise serializers.ValidationError(
+                    {
+                        "point": "Invalid geographic coordinates provided."
+                    }
+                )
+
+        return attrs

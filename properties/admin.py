@@ -61,7 +61,8 @@ class PropertyImageInline(admin.TabularInline):
         if obj.image:
             return format_html(
                 '<img src="{}" style="max-height: 80px; max-width: 120px; '
-                'object-fit: cover; border-radius: 6px; border: 1px solid #ddd;" />',
+                'object-fit: cover; border-radius: 6px;'
+                + ' border: 1px solid #ddd;" />',
                 obj.image.url,
             )
         return "No image uploaded"

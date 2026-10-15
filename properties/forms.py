@@ -10,8 +10,10 @@ class PropertySearchForm(forms.Form):
             attrs={
                 "id": "location-search",
                 "autocomplete": "off",
-                "placeholder": "Search location or vibe e.g. Gulshan, luxury apartment",
-                "class": "w-full border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-400",
+                "placeholder": "Search location or vibe e.g."
+                + " Gulshan, luxury apartment",
+                "class": "w-full border rounded-lg px-4 py-3"
+                + " focus:ring-2 focus:ring-blue-400",
             }
         ),
     )
@@ -24,7 +26,8 @@ class PropertySearchForm(forms.Form):
             attrs={
                 "placeholder": "Radius (km)",
                 "step": "0.5",
-                "class": "w-full md:w-36 border rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-400",
+                "class": "w-full md:w-36 border rounded-lg px-4 py-3"
+                + " focus:ring-2 focus:ring-blue-400",
             }
         ),
     )
@@ -36,7 +39,8 @@ class PropertySearchForm(forms.Form):
         widget=forms.NumberInput(
             attrs={
                 "placeholder": "Min Price",
-                "class": "w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400",
+                "class": "w-full border rounded-lg px-4 py-2 focus:ring-2"
+                + " focus:ring-blue-400",
             }
         ),
     )
@@ -48,7 +52,8 @@ class PropertySearchForm(forms.Form):
         widget=forms.NumberInput(
             attrs={
                 "placeholder": "Max Price",
-                "class": "w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400",
+                "class": "w-full border rounded-lg px-4 py-2 focus:ring-2"
+                + " focus:ring-blue-400",
             }
         ),
     )
@@ -59,7 +64,8 @@ class PropertySearchForm(forms.Form):
         widget=forms.NumberInput(
             attrs={
                 "placeholder": "Min Beds",
-                "class": "w-full border rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-400",
+                "class": "w-full border rounded-lg px-4 py-2"
+                + " focus:ring-2 focus:ring-blue-400",
             }
         ),
     )
