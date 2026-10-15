@@ -8,6 +8,8 @@ from pgvector.django import CosineDistance
 from .forms import PropertySearchForm
 from .models import Location, Property
 from .utils.embeddings import generate_embedding
+from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
 
 
 def home(request):
@@ -150,11 +152,26 @@ def property_detail(request, slug):
         "Garden",
     ]
 
+    base_list_url = reverse("property_list")
+    query_string = request.GET.urlencode()
+    referer = request.META.get("HTTP_REFERER", "")
+
+    if query_string:
+        back_url = f"{base_list_url}?{query_string}"
+    elif referer and url_has_allowed_host_and_scheme(
+        url=referer,
+        allowed_hosts={request.get_host()},
+    ):
+        back_url = referer
+    else:
+        back_url = base_list_url
+
     return render(
         request,
         "properties/detail.html",
         {
             "property": property_obj,
             "amenities": amenities,
+            "back_url": back_url,
         },
     )

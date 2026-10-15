@@ -38,7 +38,7 @@
             ৳ {{ property.price }}
         </p>
 
-        <a href="{% url 'property_detail' property.slug %}" class="inline-block mt-4 text-blue-600 font-medium">
+        <a href="{% url 'property_detail' property.slug %}{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}" class="inline-block mt-4 text-blue-600 font-medium">
             View Details →
         </a>
     </div>
