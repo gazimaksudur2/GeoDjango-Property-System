@@ -36,7 +36,10 @@ def property_list(request):
     search_type = request.GET.get("search_type", "location")
     if search_type not in {"location", "property"}:
         search_type = "location"
+
     matched_location = None
+    matched_property = None
+    anchor_label = ""
 
     if form.is_valid():
         search_type = form.cleaned_data.get("search_type") or "location"
@@ -91,6 +94,7 @@ def property_list(request):
                     )
 
                 if matched_location and matched_location.point:
+                    anchor_label = matched_location.name
                     properties = (
                         properties.filter(
                             Q(
@@ -118,54 +122,56 @@ def property_list(request):
 
             elif search_type == "property":
                 # --- MODE 2: PROPERTY SEARCH (Direct Semantic Vector + Keyword Match) ---
-                properties = properties.annotate(
-                    similarity=CosineDistance(
-                        "embedding",
-                        query_embedding,
-                    ),
-                    exact_boost=Case(
-                        When(id=target_id, then=Value(0))
-                        if target_id
-                        else When(pk__isnull=True, then=Value(0)),
-                        When(title__icontains=location_query, then=Value(1)),
-                        default=Value(2),
-                        output_field=IntegerField(),
-                    ),
-                ).filter(
-                    Q(id=target_id)
-                    if target_id
-                    else (
-                        Q(title__icontains=location_query)
+                properties = (
+                    properties.filter(embedding__isnull=False)
+                    .annotate(
+                        similarity=CosineDistance(
+                            "embedding",
+                            query_embedding,
+                        ),
+                        exact_boost=Case(
+                            When(id=target_id, then=Value(0))
+                            if target_id
+                            else When(pk__isnull=True, then=Value(0)),
+                            When(title__icontains=location_query, then=Value(1)),
+                            default=Value(2),
+                            output_field=IntegerField(),
+                        ),
+                    )
+                    .filter(
+                        Q(id=target_id)
+                        | Q(title__icontains=location_query)
                         | Q(description__icontains=location_query)
                         | Q(property_type__icontains=location_query)
                         | Q(similarity__lte=0.68)
-                    )
-                )
-
-                # If user clicked a specific property from autocomplete, show it first + similar properties
-                if target_id:
-                    properties = (
-                        Property.objects.filter(is_active=True)
-                        .select_related("location")
-                        .prefetch_related("images")
-                        .annotate(
-                            city_distance=Distance("point", "location__point"),
-                            similarity=CosineDistance("embedding", query_embedding),
-                            exact_boost=Case(
-                                When(id=target_id, then=Value(0)),
-                                default=Value(1),
-                                output_field=IntegerField(),
-                            ),
+                        if target_id
+                        else (
+                            Q(title__icontains=location_query)
+                            | Q(description__icontains=location_query)
+                            | Q(property_type__icontains=location_query)
+                            | Q(similarity__lte=0.68)
                         )
                     )
-                    if min_price is not None:
-                        properties = properties.filter(price__gte=min_price)
-                    if max_price is not None:
-                        properties = properties.filter(price__lte=max_price)
-                    if bedrooms is not None:
-                        properties = properties.filter(bedrooms__gte=bedrooms)
+                    .order_by("exact_boost", "similarity")
+                )
 
-                properties = properties.order_by("exact_boost", "similarity")
+                # Determine the reference property (selected from autocomplete or top-ranked)
+                if target_id:
+                    matched_property = Property.objects.filter(
+                        id=target_id, is_active=True
+                    ).first()
+                if not matched_property:
+                    matched_property = properties.first()
+
+                # Annotate distance of every property from the reference property
+                if matched_property and matched_property.point:
+                    anchor_label = matched_property.title
+                    properties = properties.annotate(
+                        search_distance=Distance(
+                            "point",
+                            matched_property.point,
+                        )
+                    ).order_by("exact_boost", "similarity", "search_distance")
         else:
             properties = properties.order_by("-is_featured", "-created_at")
     else:
@@ -188,6 +194,8 @@ def property_list(request):
             "location_query": location_query,
             "search_type": search_type,
             "matched_location": matched_location,
+            "matched_property": matched_property,
+            "anchor_label": anchor_label,
             "query_string": query_params.urlencode(),
         },
     )
@@ -207,6 +215,21 @@ def property_detail(request, slug):
         "Balcony",
         "Garden",
     ]
+
+    # Calculate 3 nearest properties from the selected property using PostGIS Distance
+    nearby_properties = []
+    if property_obj.point:
+        nearby_properties = (
+            Property.objects.filter(is_active=True, point__isnull=False)
+            .exclude(id=property_obj.id)
+            .select_related("location")
+            .prefetch_related("images")
+            .annotate(
+                city_distance=Distance("point", "location__point"),
+                search_distance=Distance("point", property_obj.point),
+            )
+            .order_by("search_distance")[:3]
+        )
 
     base_list_url = reverse("property_list")
     query_string = request.GET.urlencode()
@@ -228,6 +251,8 @@ def property_detail(request, slug):
         {
             "property": property_obj,
             "amenities": amenities,
+            "nearby_properties": nearby_properties,
+            "anchor_label": property_obj.title,
             "back_url": back_url,
         },
     )

@@ -128,5 +128,25 @@
             </div>
         </div>
     </div>
+    <div class="pt-8 border-t border-gray-200">
+        <div class="mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">
+                Nearby Property Options
+            </h2>
+            <p class="text-sm text-gray-500 mt-1">
+                Closest properties calculated via PostGIS spatial distance from <strong>{{ property.title }}</strong>
+            </p>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+            {% for nearby_prop in nearby_properties %}
+                {% include "properties/components/property_card.html" with property=nearby_prop anchor_label=property.title %}
+            {% empty %}
+                <p class="text-gray-500 col-span-3 text-center py-8">
+                    No nearby properties available.
+                </p>
+            {% endfor %}
+        </div>
+    </div>
 </div>
 {% endblock %}

@@ -33,6 +33,10 @@ Properties
         <p class="text-sm text-blue-600 mt-1">
             Spatial PostGIS search anchored near: <strong>{{ matched_location.name }}, {{ matched_location.city }}</strong>
         </p>
+        {% elif search_type == 'property' and matched_property %}
+        <p class="text-sm text-purple-600 mt-1">
+            Distances calculated from top/selected property: <strong>{{ matched_property.title }} ({{ matched_property.location.name }})</strong>
+        </p>
         {% endif %}
     </div>
 

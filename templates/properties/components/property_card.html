@@ -20,7 +20,15 @@
             📍 {{ property.location.name }}, {{ property.location.city }}
         </p>
 
-        {% if property.city_distance %}
+        {% if property.search_distance is not None %}
+        <p class="text-xs text-blue-600 font-medium mt-1">
+            {% if property.search_distance.km < 0.01 %}
+                🎯 Selected / Top Reference Property (0.00 km)
+            {% else %}
+                📏 {{ property.search_distance.km|floatformat:2 }} km from {{ anchor_label|default:"selected reference" }}
+            {% endif %}
+        </p>
+        {% elif property.city_distance %}
         <p class="text-xs text-gray-400 mt-1">
             📏 {{ property.city_distance.km|floatformat:2 }} km from {{ property.location.name }} center
         </p>
