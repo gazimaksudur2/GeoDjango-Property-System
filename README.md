@@ -1,261 +1,91 @@
-# GeoProperty System: Enterprise Location-Aware Property Discovery Platform
+# GeoProperty: Spatial & Semantic Real Estate Discovery Engine
 
-A production-ready real estate and vacation rental discovery platform built with **Django 4.2**, **GeoDjango**, **PostGIS**, and **pgvector**. The system combines **geospatial queries** (PostGIS `DWithin` and `Distance`) with **AI-powered semantic vector search** (`sentence-transformers/all-MiniLM-L6-v2` and `pgvector` HNSW indexing) and features an interactive **Location vs. Property Dual-Mode Search Toggle**.
-
----
-
-## Core Features
-
-* **Dual-Mode Search Toggle (`Location` vs. `Property`)**:
-  * **Location Mode**: Autocompletes locations via `/api/v1/locations/autocomplete/` (hybrid exact + `pgvector` cosine similarity) and executes a PostGIS `DWithin` + `Distance` radius search anchored at the matched location's coordinates.
-  * **Property Mode**: Autocompletes properties directly via `/api/v1/properties/autocomplete/` and ranks listings using `pgvector` `CosineDistance` semantic similarity plus keyword relevance.
-* **Geographic & Spatial Property Search**: Powered by PostGIS and GeoDjango `PointField` coordinates (`SRID 4326`) supporting radius filtering (`DWithin`), city-center distance annotations (`Distance`), and nearest-neighbor lookups.
-* **AI-Powered Semantic & Hybrid Search**: Generates 384-dimensional text embeddings using `sentence-transformers/all-MiniLM-L6-v2`, indexed with HNSW indexes (`vector_cosine_ops`) in `pgvector`.
-* **Automated Pandas Data Pipeline**: Custom Django management commands leveraging `pandas` for cleaning and importing locations, properties, and property images from CSV files.
-* **Advanced Django Admin**: Configured with `GISModelAdmin`, custom `PriceRangeFilter` and `EmbeddingStatusFilter` list filters, and `PropertyImageInline` with HTML thumbnail previews.
-* **Django Forms & DRF APIs**: Frontend `PropertySearchForm` with custom validation (`clean_search_type`, `clean_location`, `clean_radius`, `clean`) alongside a Django REST Framework (DRF) API suite with serializer payload validation.
+GeoProperty is a GeoDjango, PostGIS, and `pgvector` discovery platform that unifies geodesic spatial queries with local dense vector embeddings (`sentence-transformers/all-MiniLM-L6-v2`) inside a single PostgreSQL 16 engine.
 
 ---
 
-## Technology Stack
+## Core Architectural Decisions & Solutions
 
-| Layer | Technologies |
-| :--- | :--- |
-| **Backend** | Python 3.12, Django 4.2, Django REST Framework (DRF) |
-| **Database** | PostgreSQL 16, PostGIS 3, pgvector (HNSW Indexing) |
-| **AI / ML** | Sentence-Transformers (`all-MiniLM-L6-v2`) |
-| **GIS** | GeoDjango, Spatial Operations (`DWithin`, `Distance`, `Contains`) |
-| **Frontend** | Django Templates, Tailwind CSS, Dual-Mode Vanilla JS Autocomplete |
-| **Infrastructure** | Docker, Docker Compose, Pandas |
+### 1. Unified Spatial + Vector Storage in PostgreSQL
+* **Decision:** Build a custom Docker image atop `pgvector/pgvector:pg16` with `postgresql-16-postgis-3` installed instead of splitting state across a relational DB and an external vector store.
+* **Solution:** `0001_initial.py` provisions both `CreateExtension("postgis")` and `VectorExtension()`. This allows single-query execution combining PostGIS spatial predicates (`DWithin`, `Distance`, `Contains`) with `pgvector` cosine distance (`<=>`) without cross-service network latency.
 
----
+### 2. Geodesic Coordinate Modeling (`geography=True`, SRID 4326)
+* **Decision:** Store `Location.point` and `Property.point` as `PointField(geography=True, srid=4326)` alongside `MultiPolygonField` (`Location.boundary`) and `PolygonField` (`Property.footprint`).
+* **Solution:** Enabling `geography=True` calculates distances over the WGS 84 spheroid in meters/kilometers rather than planar Euclidean degrees, ensuring accurate radius filtering (`D(km=radius_km)`) and distance annotations.
 
-## API Endpoints Reference
+### 3. In-Process Embedding Singleton & HNSW Indexing
+* **Decision:** Generate 384-dimensional embeddings locally via `all-MiniLM-L6-v2` and index them with PostgreSQL HNSW indexes.
+* **Solution:**
+  * **Process Caching:** `properties/utils/embeddings.py` caches `SentenceTransformer("all-MiniLM-L6-v2")` with `@lru_cache(maxsize=1)` so model weights load only once per worker process.
+  * **Context-Enriched Prompts:** Management commands (`generate_location_embeddings`, `generate_property_embeddings`) synthesize structured natural-language profiles (combining title, neighborhood, city, property type, bed/bath counts, and description) prior to encoding.
+  * **Sub-Linear ANN Search:** Both `Location` and `Property` models define an `HnswIndex` (`m=16`, `ef_construction=64`, `opclasses=["vector_cosine_ops"]`) to accelerate `CosineDistance` queries.
 
-Base URL: `/api/v1/`
+### 4. Dual-Mode Hybrid Search Pipeline
+The search engine (`property_list` view and `static/js/location_autocomplete.js`) separates user intent into two retrieval pipelines via a frontend toggle:
 
-* **Location Autocomplete (Toggle = Location)**: `GET /api/v1/locations/autocomplete/?q=gul`
-* **Property Autocomplete (Toggle = Property)**: `GET /api/v1/properties/autocomplete/?q=luxury`
-* **Semantic Location Search**: `GET /api/v1/locations/semantic_search/?q=residential+area+near+dhaka`
-* **Property List / Filters**: `GET /api/v1/properties/`
-* **Semantic Property Search**: `GET /api/v1/properties/semantic_search/?q=luxury+apartment`
-* **Nearby Properties (Radius)**: `GET /api/v1/properties/nearby/?lng=90.4078&lat=23.7925&radius=10`
-* **Nearest Property Lookup**: `GET /api/v1/properties/nearest/?lng=90.4078&lat=23.7925`
-* **Fused Hybrid Search**: `GET /api/v1/properties/hybrid_search/?q=luxury+apartment&lng=90.4078&lat=23.7925&radius=10`
+| Mode | Retrieval & Ranking Pipeline | Spatial Distance Anchor |
+| :--- | :--- | :--- |
+| **Location Mode** (`search_type=location`) | **3-Tier Location Resolution:** Attempts exact ID match (`target_id`), falls back to `icontains` on `name`/`city`, and finally falls back to vector similarity (`CosineDistance <= 0.55`). Filters properties via `point__dwithin=(matched_location.point, D(km=radius_km))` or foreign key relation. | Annotates `search_distance` from `matched_location.point` and sorts by `(search_distance, similarity)`. |
+| **Property Mode** (`search_type=property`) | **Hybrid Lexical + Vector Retrieval:** Matches active properties via `target_id`, substring (`title`, `description`, `property_type`), or vector similarity (`CosineDistance <= 0.68`). Uses a SQL `Case/When` expression (`exact_boost`) to pin exact matches before ordering by cosine distance. | Resolves the top or selected property (`matched_property`) and annotates `search_distance` from `matched_property.point` for all results. |
 
-# GeoProperty System: Enterprise Location-Aware Property Discovery Platform
+### 5. Context-Aware Spatial Distance & Nearby Engine
+* **Listing Cards:** Dynamically display `search_distance` relative to the active search anchor (`matched_location` or `matched_property`), falling back to `city_distance` (`Distance("point", "location__point")`) when browsing unfiltered listings.
+* **Detail Page Nearby Recommendations:** `property_detail` executes a PostGIS nearest-neighbor lookup (`exclude(id=property_obj.id).annotate(search_distance=Distance("point", property_obj.point)).order_by("search_distance")[:3]`) to display the 3 closest properties with exact kilometer offsets.
 
-A modern, production-ready real estate discovery platform built with **Django 4.2**, **GeoDjango**, **PostGIS**, and **pgvector**. The system seamlessly blends **spatial geospatial queries** (PostGIS) with **AI-powered semantic vector search** (`sentence-transformers` and `pgvector`) to allow users to discover properties via geographic proximity, natural language queries, and precise property filters.
+### 6. Low-Latency Hybrid Autocomplete & Input Validation
+* **Debounced Dual-Endpoint Autocomplete:** Frontend debouncing (`300ms`) routes requests to `/api/v1/locations/autocomplete/` or `/api/v1/properties/autocomplete/`. Each endpoint validates parameters via `AutocompleteQuerySerializer`, prioritizes fast `icontains` lexical matches, excludes seen IDs, and backfills remaining slots using `pgvector` `CosineDistance`.
+* **Two-Layer Validation:** `PropertySearchForm` enforces search mode, regex character whitelisting, radius bounds (`0.5`–`100` km), and min/max price cross-validation on HTML views, while DRF serializers validate coordinate bounds (`-180..180`, `-90..90`), positive pricing/area, and residential bedroom rules on API payloads.
 
----
-
-## 🌟 Core Features
-
-* **Geographic & Spatial Property Search**: Powered by PostGIS and GeoDjango `PointField` coordinates (`SRID 4326`) supporting radius filtering (`DWithin`), distance annotations, and nearest-neighbor lookups.
-
-
-* **AI-Powered Semantic & Hybrid Search**: Generates 384-dimensional text embeddings using `sentence-transformers/all-MiniLM-L6-v2`, indexed with HNSW indexes in `pgvector` for lightning-fast cosine similarity vector searches.
-
-
-* **Robust Data Pipeline**: Automated bulk CSV data ingestion via custom Django management commands leveraging `pandas` for locations, properties, and property images.
-
-
-* **Advanced Django Admin**: Fully configured with `GISModelAdmin` OpenStreetMap integrations, custom price range & embedding status list filters, and inline image uploads featuring rendered HTML thumbnail previews.
-
-
-* **Django Forms & DRF APIs**: Secure frontend search forms with custom input sanitization & validation, alongside a complete Django REST Framework (DRF) API suite featuring field-level and object-level payload validations.
-
-
-* **Responsive User Interface**: Built with Tailwind CSS and JavaScript autocomplete, ensuring seamless pagination and query-string preservation across search and detail views.
-
-
+### 7. Idempotent Data Ingestion & Admin GIS Tooling
+* **Transactional ETL Commands:** `import_locations`, `import_properties`, and `import_property_images` sanitize CSV `NaN` values with Pandas, construct `Point(lng, lat, srid=4326)` geometries, cache remote Unsplash image downloads in memory, and execute inside `@transaction.atomic` blocks using `update_or_create`.
+* **GIS Admin & Custom Filters:** Configured with `GISModelAdmin` map widgets, custom `PriceRangeFilter` and `EmbeddingStatusFilter` classes, and `PropertyImageInline` with HTML thumbnail previews.
 
 ---
 
-## 🛠️ Technology Stack
-
-| Layer | Technologies |
-| --- | --- |
-| **Backend** | Python 3.12, Django 4.2, Django REST Framework (DRF)
-
- |
-| **Database** | PostgreSQL 16, PostGIS 3, pgvector (HNSW Indexing)
-
- |
-| **AI / ML** | Sentence-Transformers (`all-MiniLM-L6-v2`)
-
- |
-| **GIS** | GeoDjango, Spatial Vector Operations (`DWithin`, `Distance`)
-
- |
-| **Frontend** | Django Templates, Tailwind CSS, JavaScript Autocomplete
-
- |
-| **Infrastructure** | Docker, Docker Compose, Pandas
-
- |
-
----
-
-## 📁 Project Architecture
-
-```text
-GeoDjango_Property_System
-│
-├── config/
-│   ├── settings.py
-│   ├── urls.py
-│   ├── asgi.py
-│   └── wsgi.py
-│
-├── properties/
-│   ├── admin.py
-│   ├── apps.py
-│   ├── forms.py
-│   ├── models.py
-│   ├── urls.py
-│   ├── views.py
-│   ├── api/
-│   │   ├── serializers.py
-│   │   ├── urls.py
-│   │   └── views.py
-│   ├── management/
-│   │   └── commands/
-│   │       ├── import_locations.py
-│   │       ├── import_properties.py
-│   │       ├── import_property_images.py
-│   │       ├── generate_location_embeddings.py
-│   │       └── generate_property_embeddings.py
-│   ├── services/
-│   │   └── search.py
-│   ├── utils/
-│   │   └── embeddings.py
-│   └── migrations/
-│
-├── data/
-│   ├── locations.csv
-│   ├── properties.csv
-│   └── property_images.csv
-│
-├── static/
-│   └── js/
-│       └── location_autocomplete.js
-│
-├── templates/
-│   ├── base.html
-│   ├── home/
-│   │   └── index.html
-│   └── properties/
-│       ├── listing.html
-│       ├── detail.html
-│       └── components/
-│           ├── property_card.html
-│           ├── search_box.html
-│           └── pagination.html
-│
-├── Dockerfile
-├── docker-compose.yml
-├── manage.py
-└── README.md
-
-```
-
----
-
-## 🗄️ Database Models
-
-1. **`Location`**: Stores geographic regions (neighborhoods, cities, states) complete with PostGIS point coordinates and 384-dimensional semantic text embeddings.
-
-
-2. **`Property`**: Stores real estate listings with pricing, specifications (bedrooms, bathrooms, area), active status, geographic points, and semantic vector representations.
-
-
-3. **`PropertyImage`**: Stores associated property photos and metadata linked to properties for gallery rendering and admin inline previews.
-
-
-
----
-
-## 🚀 Installation & Setup Guide
-
-### 1. Clone the Repository
+## Quick Start
 
 ```bash
-git clone <repository-url>
-cd GeoDjango_Property_System
-
-```
-
-### 2. Install Dependencies
-
-Using `uv` or `pip`:
-
-```bash
-uv install -r requirements.txt
-
-```
-
-### 3. Start PostgreSQL + PostGIS + pgvector (Docker)
-
-```bash
+# 1. Start PostgreSQL 16 + PostGIS 3 + pgvector container
 docker compose up -d
 
-```
-
-### 4. Run Database Migrations
-
-```bash
+# 2. Create virtual environment, install dependencies & run migrations
+uv venv
+source .venv/bin/activate
+uv pip install -r requirements.txt
 python manage.py migrate
 
-```
-
-### 5. Import Bulk CSV Data
-
-Run the custom management commands sequentially to ingest locations, properties, and images:
-
-```bash
+# 3. Import CSV datasets (locations, properties, images)
 python manage.py import_locations
 python manage.py import_properties
 python manage.py import_property_images
 
-```
-
-### 6. Generate AI Embeddings
-
-Run the embedding generators to compute vector representations for semantic search:
-
-```bash
+# 4. Generate 384-d embeddings for Locations and Properties
 python manage.py generate_location_embeddings
 python manage.py generate_property_embeddings
 
-```
-
-### 7. Run the Development Server
-
-```bash
+# 5. Run tests & start server
+python manage.py test
 python manage.py runserver
 
 ```
 
-Access the application at: `[http://127.0.0.1:8000/](http://127.0.0.1:8000/)`
-
 ---
 
-## 🔌 API Endpoints Reference
+## API Reference (`/api/v1/`)
 
-Base URL: `/api/v1/`
+| Endpoint | Method | Description |
+| --- | --- | --- |
+| `/api/v1/locations/` | `GET, POST` | CRUD operations for locations with coordinate validation |
+| `/api/v1/locations/autocomplete/?q=<str>&limit=8` | `GET` | Hybrid lexical + `pgvector` location autocomplete |
+| `/api/v1/locations/semantic_search/?q=<str>` | `GET` | Top 10 locations ranked by `CosineDistance` |
+| `/api/v1/properties/` | `GET, POST` | Filterable/searchable property CRUD (`property_type`, `status`, `bedrooms`, `price`) |
+| `/api/v1/properties/autocomplete/?q=<str>&limit=8` | `GET` | Hybrid lexical + `pgvector` property autocomplete |
+| `/api/v1/properties/nearby/?lng=<x>&lat=<y>&radius=5` | `GET` | PostGIS `distance_lte` spatial radius filtering |
+| `/api/v1/properties/nearest/?lng=<x>&lat=<y>` | `GET` | Single closest property using PostGIS `Distance` |
+| `/api/v1/properties/contains/?lng=<x>&lat=<y>` | `GET` | Properties whose `footprint` polygon contains the given point |
+| `/api/v1/properties/semantic_search/?q=<str>` | `GET` | Top 10 properties ranked by `CosineDistance` |
+| `/api/v1/properties/hybrid_search/?q=<str>&lng=<x>&lat=<y>&radius=5` | `GET` | Spatial radius filter combined with vector similarity ranking |
+| `/api/v1/properties/location_hybrid_search/?q=<str>` | `GET` | Resolves semantic location first, then ranks its properties by vector similarity |
 
-* **Location Autocomplete**: `GET /api/v1/locations/autocomplete/?q=gul`
-
-* **Semantic Location Search**: `GET /api/v1/locations/semantic_search/?q=residential+area+near+dhaka`
-
-* **Property List / Filters**: `GET /api/v1/properties/`
-
-* **Semantic Property Search**: `GET /api/v1/properties/semantic_search/?q=luxury+apartment`
-
-* **Nearby Properties (Radius)**: `GET /api/v1/properties/nearby/?lng=90.4078&lat=23.7925&radius=10`
-
-* **Nearest Property Lookup**: `GET /api/v1/properties/nearest/?lng=90.4078&lat=23.7925`
-
-* **Fused Hybrid Search**: `GET /api/v1/properties/hybrid_search/?q=luxury+apartment&lng=90.4078&lat=23.7925&radius=10`
-
+```
