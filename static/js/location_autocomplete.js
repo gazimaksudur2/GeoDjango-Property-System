@@ -23,6 +23,11 @@ document.addEventListener("DOMContentLoaded", () => {
       targetIdInput.value = "";
     }
 
+    // Clear input value when switching modes to avoid mismatched queries
+    if (input) {
+      input.value = "";
+    }
+
     modeButtons.forEach((btn) => {
       const isSelected = btn.getAttribute("data-mode") === normalizedMode;
       if (isSelected) {
@@ -48,10 +53,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     suggestions.innerHTML = "";
     suggestions.classList.add("hidden");
-
-    if (retriggerAutocomplete && input.value.trim().length >= 2) {
-      dispatchAutocomplete(input.value.trim());
-    }
   }
 
   // 2. Function A: Location Mode Autocomplete -> /api/v1/locations/autocomplete/

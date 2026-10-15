@@ -1,52 +1,70 @@
-<div class="bg-white shadow-sm rounded-xl p-6 mb-8">
-    <form id="property-search-form" method="GET" action="{% url 'property_list' %}" class="space-y-4">
+<div class="bg-white shadow-sm rounded-xl p-6 mb-8 border border-gray-100">
+    <form id="property-search-form" method="GET" action="{% url 'property_list' %}" class="space-y-6">
         {{ form.search_type }}
         {{ form.target_id }}
 
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-center">
-            <!-- Toggle Button Group Beside Search Field -->
-            <div class="md:col-span-3 flex">
-                <div class="inline-flex w-full rounded-lg border border-gray-300 bg-gray-100 p-1" role="group" aria-label="Search Mode Toggle">
-                    <button type="button"
-                            data-mode="location"
-                            class="search-mode-btn flex-1 px-3 py-2 text-sm font-semibold rounded-md transition {% if search_type != 'property' %}bg-blue-600 text-white shadow-sm{% else %}text-gray-700 hover:text-gray-900{% endif %}">
-                        📍 Location
-                    </button>
-                    <button type="button"
-                            data-mode="property"
-                            class="search-mode-btn flex-1 px-3 py-2 text-sm font-semibold rounded-md transition {% if search_type == 'property' %}bg-blue-600 text-white shadow-sm{% else %}text-gray-700 hover:text-gray-900{% endif %}">
-                        🏠 Property
-                    </button>
-                </div>
+        <!-- Search Mode Toggle Header & Group -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-gray-100 gap-4">
+            <div>
+                <h3 class="text-base font-semibold text-gray-900">Search Mode</h3>
+                <p class="text-xs text-gray-500">Choose between geospatial location radius or AI property semantic discovery</p>
             </div>
-
-            <!-- Search Input with Autocomplete Dropdown -->
-            <div class="relative md:col-span-4">
-                {{ form.location }}
-                <div id="suggestions" class="absolute z-20 bg-white border rounded-lg shadow-lg w-full hidden mt-1 max-h-80 overflow-y-auto"></div>
+            <div class="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1 w-full sm:w-auto" role="group" aria-label="Search Mode Toggle">
+                <button type="button"
+                        data-mode="location"
+                        class="search-mode-btn flex-1 sm:flex-initial px-4 py-2 text-xs font-semibold rounded-md transition {% if search_type != 'property' %}bg-blue-600 text-white shadow-sm{% else %}text-gray-600 hover:text-gray-900{% endif %}">
+                    📍 Location Mode
+                </button>
+                <button type="button"
+                        data-mode="property"
+                        class="search-mode-btn flex-1 sm:flex-initial px-4 py-2 text-xs font-semibold rounded-md transition {% if search_type == 'property' %}bg-blue-600 text-white shadow-sm{% else %}text-gray-600 hover:text-gray-900{% endif %}">
+                    🏠 Property Mode
+                </button>
             </div>
-
-            <!-- Radius Input (Disabled/Hidden in Property Mode) -->
-            <div id="radius-container" class="md:col-span-2 {% if search_type == 'property' %}hidden{% endif %}">
-                {{ form.radius }}
-            </div>
-
-            <div class="md:col-span-1">{{ form.min_price }}</div>
-            <div class="md:col-span-1">{{ form.max_price }}</div>
-            <div class="md:col-span-1">{{ form.bedrooms }}</div>
         </div>
 
-        <div class="flex justify-end gap-3">
-            <a href="{% url 'property_list' %}" class="px-4 py-2 text-gray-600 border rounded-lg hover:bg-gray-50">
+        <!-- Primary Query & Radius Fields -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
+            <div class="relative md:col-span-9">
+                <label for="location-search" class="block text-xs font-medium text-gray-700 mb-1.5 uppercase tracking-wider">Search Query</label>
+                {{ form.location }}
+                <div id="suggestions" class="absolute z-20 bg-white border rounded-lg shadow-xl w-full hidden mt-1 max-h-80 overflow-y-auto"></div>
+            </div>
+
+            <div id="radius-container" class="md:col-span-3 {% if search_type == 'property' %}hidden{% endif %}">
+                <label for="radius-input" class="block text-xs font-medium text-gray-700 mb-1.5 uppercase tracking-wider">Radius (km)</label>
+                {{ form.radius }}
+            </div>
+        </div>
+
+        <!-- Advanced Filter Row -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2 border-t border-gray-100">
+            <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1.5 uppercase tracking-wider">Min Price</label>
+                {{ form.min_price }}
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1.5 uppercase tracking-wider">Max Price</label>
+                {{ form.max_price }}
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-gray-700 mb-1.5 uppercase tracking-wider">Minimum Bedrooms</label>
+                {{ form.bedrooms }}
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex justify-end items-center gap-3 pt-2">
+            <a href="{% url 'property_list' %}" class="px-5 py-2.5 text-sm font-medium text-gray-600 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition">
                 Reset
             </a>
-            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-medium">
+            <button type="submit" class="px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition">
                 Apply Filters
             </button>
         </div>
 
         {% if form.errors %}
-        <div class="p-3 bg-red-50 text-red-600 rounded-lg text-sm">
+        <div class="p-3 bg-red-50 text-red-600 rounded-lg text-sm border border-red-100">
             {% for field, errors in form.errors.items %}
                 {% for error in errors %}
                     <p>{{ error }}</p>

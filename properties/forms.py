@@ -111,7 +111,8 @@ class PropertySearchForm(forms.Form):
                 raise forms.ValidationError(
                     "Search query must be at least 2 characters long."
                 )
-            if not re.match(r"^[a-zA-Z0-9\s,\-\.'&]+$", location):
+            # Allow letters, numbers, spaces, and common property/location punctuation: , - . ' " & ( ) / # : + |
+            if not re.match(r"^[a-zA-Z0-9\s,\-\.'\"&()/#:+|]+$", location):
                 raise forms.ValidationError(
                     "Search query contains invalid special characters."
                 )

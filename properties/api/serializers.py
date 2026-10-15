@@ -6,6 +6,7 @@ from ..models import (
     Property,
     PropertyImage,
 )
+import re
 
 
 class AutocompleteQuerySerializer(serializers.Serializer):
@@ -18,6 +19,10 @@ class AutocompleteQuerySerializer(serializers.Serializer):
         if len(cleaned) < 2:
             raise serializers.ValidationError(
                 "Query parameter 'q' must be at least 2 characters long."
+            )
+        if not re.match(r"^[a-zA-Z0-9\s,\-\.'\"&()/#:+|]+$", cleaned):
+            raise serializers.ValidationError(
+                "Query contains invalid special characters."
             )
         return cleaned
 
