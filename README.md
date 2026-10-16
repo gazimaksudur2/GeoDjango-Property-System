@@ -45,30 +45,52 @@ The search engine (`property_list` view and `static/js/location_autocomplete.js`
 
 ## Quick Start
 
+### First-time setup
+
+Prerequisites: Docker Compose and [uv](https://docs.astral.sh/uv/).
+
 ```bash
-# 1. Start PostgreSQL 16 + PostGIS 3 + pgvector container
+# 1. Build and start PostgreSQL 16 with PostGIS 3 and pgvector
+docker compose up -d --build
+
+# 2. Create the virtual environment and install project dependencies
+uv sync
+
+# 3. Apply database migrations
+uv run python manage.py migrate
+
+# 4. Create an admin account (one time)
+uv run python manage.py createsuperuser
+
+# 5. Import the included CSV data
+uv run python manage.py import_locations
+uv run python manage.py import_properties
+uv run python manage.py import_property_images
+
+# 6. Generate embeddings for semantic search
+uv run python manage.py generate_location_embeddings
+uv run python manage.py generate_property_embeddings
+```
+
+Use a strong password when prompted by `createsuperuser`; Django may ask whether to bypass validation for weak passwords. For normal use, do not bypass it.
+
+### Run and maintain the project
+
+```bash
+# Start the database after initial setup, if it is not already running
 docker compose up -d
 
-# 2. Create virtual environment, install dependencies & run migrations
-uv venv
-source .venv/bin/activate
-uv pip install -r requirements.txt
-python manage.py migrate
+# Apply any new migrations
+uv run python manage.py migrate
 
-# 3. Import CSV datasets (locations, properties, images)
-python manage.py import_locations
-python manage.py import_properties
-python manage.py import_property_images
+# Run the test suite
+uv run python manage.py test
 
-# 4. Generate 384-d embeddings for Locations and Properties
-python manage.py generate_location_embeddings
-python manage.py generate_property_embeddings
-
-# 5. Run tests & start server
-python manage.py test
-python manage.py runserver
-
+# Start the development server
+uv run python manage.py runserver
 ```
+
+Open `http://127.0.0.1:8000/` for the site or `http://127.0.0.1:8000/admin/` for the Django admin. The database container can be stopped with `docker compose down`; its data is retained in the Compose volume.
 
 ---
 
